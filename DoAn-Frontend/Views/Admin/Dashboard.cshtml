@@ -1,0 +1,96 @@
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<h2 class="mb-4 fw-bold"><i class="bi bi-speedometer2"></i> Dashboard</h2>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-white-50 mb-2">Tổng đơn hàng</h6>
+                        <h2 class="mb-0">0</h2>
+                    </div>
+                    <i class="bi bi-cart fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card text-white" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-white-50 mb-2">Doanh thu tháng</h6>
+                        <h2 class="mb-0">0 ₫</h2>
+                    </div>
+                    <i class="bi bi-currency-dollar fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card text-white" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-white-50 mb-2">Sản phẩm</h6>
+                        <h2 class="mb-0">0</h2>
+                    </div>
+                    <i class="bi bi-box-seam fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card text-white" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-white-50 mb-2">Người dùng</h6>
+                        <h2 class="mb-0">0</h2>
+                    </div>
+                    <i class="bi bi-people fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Thống kê doanh thu</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+const ctx = document.getElementById('revenueChart').getContext('2d');
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6'],
+        datasets: [{
+            label: 'Doanh thu',
+            data: [0, 0, 0, 0, 0, 0],
+            borderColor: '#667eea',
+            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+            tension: 0.4
+        }]
+    }
+});
+</script>
+}

@@ -1,0 +1,176 @@
+@model List<Cart>
+@inject DoAn_Frontend.Services.ApiService ApiService
+@{
+    ViewData["Title"] = "Giỏ hàng";
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4 fw-bold"><i class="bi bi-cart3"></i> Giỏ hàng của bạn</h2>
+    
+    @if (Model != null && Model.Any())
+    {
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Ảnh</th>
+                        <th>Tên sản phẩm</th>
+                        <th>Giá</th>
+                        <th>Số lượng</th>
+                        <th>Thành tiền</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                <img src="@item.Product?.ImageURL" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;" 
+                                     onerror="this.src='https://via.placeholder.com/80x80'">
+                            </td>
+                            <td>
+                                <strong>@item.Product?.ProductName</strong>
+                            </td>
+                            <td>@item.Product?.Price.ToString("N0") ₫</td>
+                            <td>
+                                <div class="input-group" style="width: 120px;">
+                                    <button class="btn btn-outline-secondary btn-sm decrement-btn" type="button" 
+                                            data-cart-id="@item.CartID" data-current-quantity="@item.Quantity">
+                                        <i class="bi bi-dash"></i>
+                                    </button>
+                                    <input type="number" class="form-control text-center quantity-input" 
+                                           value="@item.Quantity" min="1" readonly 
+                                           data-cart-id="@item.CartID" style="width: 60px;">
+                                    <button class="btn btn-outline-secondary btn-sm increment-btn" type="button" 
+                                            data-cart-id="@item.CartID" data-current-quantity="@item.Quantity">
+                                        <i class="bi bi-plus"></i>
+                                    </button>
+                                </div>
+                            </td>
+                            <td class="fw-bold text-danger item-total" data-cart-id="@item.CartID" data-unit-price="@item.Product?.Price">
+                                @((item.Product?.Price * item.Quantity ?? 0).ToString("N0")) ₫
+                            </td>
+                            <td>
+                                <a href="@Url.Action("Remove", new { cartId = item.CartID })" class="btn btn-danger btn-sm">
+                                    <i class="bi bi-trash"></i> Xóa
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-md-8"></div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold">Tổng tiền</h5>
+                        <h3 class="text-danger fw-bold" id="total-amount">@Model.Sum(item => item.Product?.Price * item.Quantity ?? 0).ToString("N0") ₫</h3>
+                        <a href="@Url.Action("Checkout", "Orders")" class="btn btn-primary btn-lg w-100 mt-3">
+                            <i class="bi bi-cart-check"></i> Thanh toán
+                        </a>
+                        <a asp-controller="Products" asp-action="Index" class="btn btn-outline-secondary w-100 mt-2">
+                            <i class="bi bi-arrow-left"></i> Tiếp tục mua sắm
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <i class="bi bi-cart-x fs-1 text-muted"></i>
+            <h4 class="text-muted mt-3">Giỏ hàng của bạn đang trống</h4>
+            <a asp-controller="Products" asp-action="Index" class="btn btn-primary btn-lg mt-3">
+                <i class="bi bi-arrow-left"></i> Tiếp tục mua sắm
+            </a>
+        </div>
+    }
+</div>
+
+@section Scripts {
+<script>
+$(document).ready(function() {
+    // Store unit prices for calculations
+    const prices = {};
+    $('.item-total').each(function() {
+        const cartId = $(this).data('cart-id');
+        const unitPrice = $(this).data('unit-price');
+        prices[cartId] = unitPrice;
+    });
+
+    // Increment button
+    $('.increment-btn').click(async function() {
+        const cartId = $(this).data('cart-id');
+        const input = $(`.quantity-input[data-cart-id="${cartId}"]`);
+        const currentQty = parseInt(input.val());
+        const newQty = currentQty + 1;
+        
+        input.val(newQty);
+        $(this).data('current-quantity', newQty);
+        
+        // Update backend
+        const response = await fetch(`/Cart/Update?cartId=${cartId}&quantity=${newQty}`, {
+            method: 'POST'
+        });
+        
+        if (response.ok) {
+            updateTotals(cartId, newQty, prices[cartId]);
+            updateCartBadge();
+        } else {
+            input.val(currentQty);
+            alert('Có lỗi xảy ra khi cập nhật số lượng!');
+        }
+    });
+
+    // Decrement button
+    $('.decrement-btn').click(async function() {
+        const cartId = $(this).data('cart-id');
+        const input = $(`.quantity-input[data-cart-id="${cartId}"]`);
+        const currentQty = parseInt(input.val());
+        
+        if (currentQty <= 1) {
+            return;
+        }
+        
+        const newQty = currentQty - 1;
+        input.val(newQty);
+        $(this).data('current-quantity', newQty);
+        
+        // Update backend
+        const response = await fetch(`/Cart/Update?cartId=${cartId}&quantity=${newQty}`, {
+            method: 'POST'
+        });
+        
+        if (response.ok) {
+            updateTotals(cartId, newQty, prices[cartId]);
+            updateCartBadge();
+        } else {
+            input.val(currentQty);
+            alert('Có lỗi xảy ra khi cập nhật số lượng!');
+        }
+    });
+
+    function updateTotals(cartId, quantity, unitPrice) {
+        // Update item total
+        const itemTotal = quantity * unitPrice;
+        $(`.item-total[data-cart-id="${cartId}"]`).text(itemTotal.toLocaleString('vi-VN') + ' ₫');
+        
+        // Update grand total
+        let grandTotal = 0;
+        $('.quantity-input').each(function() {
+            const itemCartId = $(this).data('cart-id');
+            const itemQty = parseInt($(this).val());
+            const itemUnitPrice = prices[itemCartId];
+            grandTotal += itemQty * itemUnitPrice;
+        });
+        
+        $('#total-amount').text(grandTotal.toLocaleString('vi-VN') + ' ₫');
+    }
+});
+</script>
+}

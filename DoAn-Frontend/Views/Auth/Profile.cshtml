@@ -1,0 +1,58 @@
+@model User
+@{
+    ViewData["Title"] = "Thông tin cá nhân";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4><i class="bi bi-person-circle"></i> Thông tin cá nhân</h4>
+                </div>
+                <div class="card-body">
+                    <form>
+                        <div class="mb-3">
+                            <label class="form-label">Họ và tên</label>
+                            <input type="text" class="form-control" value="@Model.FullName">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" value="@Model.Email" readonly>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Số điện thoại</label>
+                            <input type="tel" class="form-control" value="@Model.Phone">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Địa chỉ</label>
+                            <textarea class="form-control" rows="3">@Model.Address</textarea>
+                        </div>
+                        
+                        <hr>
+                        
+                        <h5 class="mb-3">Đổi mật khẩu</h5>
+                        <div class="mb-3">
+                            <label class="form-label">Mật khẩu hiện tại</label>
+                            <input type="password" class="form-control">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Mật khẩu mới</label>
+                            <input type="password" class="form-control">
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-check-circle"></i> Cập nhật thông tin
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

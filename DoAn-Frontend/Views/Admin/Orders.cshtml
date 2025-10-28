@@ -1,0 +1,64 @@
+@model List<Order>
+@{
+    ViewData["Title"] = "Quản lý đơn hàng";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<h2 class="mb-4 fw-bold"><i class="bi bi-cart"></i> Quản lý đơn hàng</h2>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th>Mã đơn</th>
+                    <th>Khách hàng</th>
+                    <th>Ngày đặt</th>
+                    <th>Tổng tiền</th>
+                    <th>Trạng thái</th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var order in Model)
+                {
+                    <tr>
+                        <td><strong>#@order.OrderID</strong></td>
+                        <td>@order.RecipientName</td>
+                        <td>@order.OrderDate.ToString("dd/MM/yyyy")</td>
+                        <td class="fw-bold text-danger">@order.TotalAmount.ToString("N0") ₫</td>
+                        <td>
+                            <select class="form-select form-select-sm" onchange="updateStatus(@order.OrderID, this.value)">
+                                @{
+                                    var status = order.Status;
+                                }
+                                <option value="Pending" selected="@(status == "Pending")">Chờ xử lý</option>
+                                <option value="Confirmed" selected="@(status == "Confirmed")">Đã xác nhận</option>
+                                <option value="Shipping" selected="@(status == "Shipping")">Đang giao</option>
+                                <option value="Delivered" selected="@(status == "Delivered")">Hoàn tất</option>
+                                <option value="Cancelled" selected="@(status == "Cancelled")">Đã hủy</option>
+                            </select>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-info" onclick="viewDetails(@order.OrderID)">
+                                <i class="bi bi-eye"></i> Chi tiết
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function updateStatus(orderId, status) {
+    if(confirm('Cập nhật trạng thái đơn hàng?')) {
+        // Implement API call
+        console.log('Update order', orderId, 'to', status);
+    }
+}
+function viewDetails(orderId) { alert('Order details: ' + orderId); }
+</script>
+}

@@ -1,0 +1,214 @@
+:root {
+  --primary-color: #6366f1;
+  --secondary-color: #ec4899;
+  --success-color: #10b981;
+  --danger-color: #ef4444;
+  --light-bg: #f8fafc;
+}
+
+* {
+  font-family: 'Poppins', sans-serif;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: #ffffff;
+}
+
+/* Navbar */
+.navbar-brand {
+  font-size: 1.8rem !important;
+  font-weight: 700;
+  color: var(--primary-color) !important;
+}
+
+.nav-link {
+  transition: color 0.3s;
+}
+
+.nav-link:hover {
+  color: var(--primary-color) !important;
+}
+
+/* Product Cards */
+.product-card {
+  transition: all 0.3s ease;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.product-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+}
+
+.product-card img {
+  transition: transform 0.5s;
+}
+
+.product-card:hover img {
+  transform: scale(1.05);
+}
+
+/* Carousel */
+.carousel-item img {
+  filter: brightness(0.85);
+  height: 450px;
+  object-fit: cover;
+}
+
+.carousel-caption {
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(5px);
+  border-radius: 10px;
+  padding: 2rem;
+}
+
+/* Buttons */
+.btn {
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* Badges */
+.badge {
+  padding: 0.4rem 0.8rem;
+  font-weight: 500;
+  border-radius: 6px;
+}
+
+/* Table */
+.table-hover tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+/* Cards */
+.card {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.card-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px 12px 0 0 !important;
+  padding: 1rem 1.5rem;
+  font-weight: 600;
+}
+
+/* Forms */
+.form-control, .form-select {
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  padding: 0.75rem 1rem;
+  transition: all 0.3s;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+}
+
+/* Star Rating */
+.star {
+  cursor: pointer;
+  font-size: 1.5rem;
+  color: #ddd;
+  transition: color 0.2s;
+}
+
+.star:hover, .star.active {
+  color: #ffc107;
+}
+
+/* Filters */
+.filter-sidebar {
+  background: #f8fafc;
+  padding: 1.5rem;
+  border-radius: 12px;
+  height: fit-content;
+}
+
+/* Admin Sidebar */
+.admin-sidebar {
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  min-height: 100vh;
+}
+
+.admin-sidebar .nav-link {
+  color: rgba(255,255,255,0.8);
+  padding: 0.75rem 1rem;
+  margin: 0.25rem 0;
+  border-radius: 8px;
+  transition: all 0.3s;
+}
+
+.admin-sidebar .nav-link:hover,
+.admin-sidebar .nav-link.active {
+  background: rgba(102, 126, 234, 0.2);
+  color: white;
+}
+
+/* Footer */
+footer {
+  margin-top: auto;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .carousel-item img {
+    height: 300px;
+  }
+  
+  .product-card {
+    margin-bottom: 1rem;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  border-radius: 10px;
+}
+
+/* Loading Spinner */
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Alerts */
+.alert {
+  border-radius: 8px;
+  border: none;
+}

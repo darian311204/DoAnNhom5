@@ -1,0 +1,182 @@
+@model List<Product>
+@{
+    ViewData["Title"] = "Sản phẩm";
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4 fw-bold"><i class="bi bi-grid"></i> Tất cả sản phẩm</h2>
+    
+    <div class="row">
+        <!-- Filter Sidebar -->
+        <div class="col-md-3 mb-4">
+            <div class="card filter-sidebar">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-funnel"></i> Lọc sản phẩm</h5>
+                </div>
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3">Danh mục</h6>
+                    <div class="list-group">
+                        <a href="@Url.Action("Index")" class="list-group-item list-group-item-action @(ViewBag.SelectedCategory == null ? "active" : "")">
+                            Tất cả
+                        </a>
+                        @foreach (var category in ViewBag.Categories as List<Category> ?? new())
+                        {
+                            <a href="@Url.Action("Index", new { categoryId = category.CategoryID })" 
+                               class="list-group-item list-group-item-action @(ViewBag.SelectedCategory == category.CategoryID ? "active" : "")">
+                                @category.CategoryName
+                            </a>
+                        }
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <h6 class="fw-bold mb-3">Khoảng giá</h6>
+                    <div class="input-group mb-2">
+                        <span class="input-group-text">Từ</span>
+                        <input type="number" class="form-control" placeholder="0" id="minPrice">
+                    </div>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text">Đến</span>
+                        <input type="number" class="form-control" placeholder="1000000" id="maxPrice">
+                    </div>
+                    <button class="btn btn-primary w-100">Lọc</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Products -->
+        <div class="col-md-9">
+            <!-- Search -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form asp-action="Index" method="get" class="input-group">
+                        <input type="text" name="search" class="form-control" placeholder="Tìm kiếm sản phẩm..." value="@ViewBag.SearchTerm">
+                        <button class="btn btn-primary" type="submit"><i class="bi bi-search"></i> Tìm kiếm</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Product Grid -->
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                @if (Model != null && Model.Any())
+                {
+                    @foreach (var product in Model)
+                    {
+                        <div class="col">
+                            <div class="card product-card h-100">
+                                <a asp-action="Details" asp-route-id="@product.ProductID" class="text-decoration-none text-dark">
+                                    <img src="@product.ImageURL" class="card-img-top" style="height: 250px; object-fit: cover;" alt="@product.ProductName" onerror="this.src='https://via.placeholder.com/300x300'">
+                                </a>
+                                <div class="card-body">
+                                    <h6 class="card-title fw-bold">@product.ProductName</h6>
+                                    <p class="text-muted mb-2">@product.Category?.CategoryName</p>
+                                    <p class="text-danger fw-bold fs-5 mb-2">@product.Price.ToString("N0") ₫</p>
+                                    @if (product.Stock > 0)
+                                    {
+                                        <span class="badge bg-success">Còn hàng</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">Hết hàng</span>
+                                    }
+                                </div>
+                                <div class="card-footer bg-white border-0">
+                                    @if (ViewBag.IsAuthenticated != null && (bool)ViewBag.IsAuthenticated)
+                                    {
+                                        <button class="btn btn-primary w-100 add-to-cart-btn" data-product-id="@product.ProductID" data-quantity="1">
+                                            <i class="bi bi-cart-plus"></i> Thêm vào giỏ
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <a class="btn btn-primary w-100" href="@Url.Action("Login", "Auth")">
+                                            <i class="bi bi-box-arrow-in-right"></i> Đăng nhập để mua
+                                        </a>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="col-12 text-center py-5">
+                        <i class="bi bi-box-seam fs-1 text-muted"></i>
+                        <p class="text-muted">Không tìm thấy sản phẩm nào</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Attach event listeners to all add-to-cart buttons
+    document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const productId = parseInt(this.getAttribute('data-product-id'));
+            const quantity = parseInt(this.getAttribute('data-quantity')) || 1;
+            console.log('Button clicked - ProductId from data:', productId);
+            addToCart(productId, quantity);
+        });
+    });
+});
+
+function addToCart(productId, quantity) {
+    console.log('Adding to cart - ProductId:', productId, 'Quantity:', quantity);
+    fetch('@Url.Action("Add", "Cart")', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ productId, quantity })
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        return response.json();
+    })
+        .then(data => {
+            console.log('Response data:', data);
+            if(data.success) {
+                showToast('success', '✓ Đã thêm vào giỏ hàng!');
+                updateCartBadge();
+            } else {
+                showToast('danger', 'Lỗi khi thêm sản phẩm vào giỏ hàng!');
+            }
+        })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('danger', 'Có lỗi xảy ra! Vui lòng thử lại.');
+    });
+}
+
+function showToast(type, message) {
+    const toastContainer = document.createElement('div');
+    toastContainer.className = 'position-fixed top-0 end-0 p-3';
+    toastContainer.style.zIndex = 9999;
+    
+    const toastHtml = `
+        <div class="toast align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="bi ${type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'} me-2"></i>
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    `;
+    
+    toastContainer.innerHTML = toastHtml;
+    document.body.appendChild(toastContainer);
+    
+    const toastElement = toastContainer.querySelector('.toast');
+    const toast = new bootstrap.Toast(toastElement);
+    toast.show();
+    
+    toastElement.addEventListener('hidden.bs.toast', function() {
+        toastContainer.remove();
+    });
+}
+</script>
+}

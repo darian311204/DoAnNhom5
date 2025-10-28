@@ -1,0 +1,49 @@
+@model List<Order>
+@{
+    ViewData["Title"] = "Lịch sử đơn hàng";
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4 fw-bold"><i class="bi bi-receipt"></i> Đơn hàng của tôi</h2>
+    
+    @if (Model != null && Model.Any())
+    {
+        @foreach (var order in Model)
+        {
+            <div class="card mb-3">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0 fw-bold">Đơn hàng #@order.OrderID</h6>
+                        <small class="text-muted">Ngày đặt: @order.OrderDate.ToString("dd/MM/yyyy HH:mm")</small>
+                    </div>
+                    <span class="badge @(order.Status == "Delivered" ? "bg-success" : order.Status == "Cancelled" ? "bg-danger" : "bg-warning")">
+                        @order.Status
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong>Người nhận:</strong> @order.RecipientName</p>
+                            <p class="mb-1"><strong>Điện thoại:</strong> @order.Phone</p>
+                            <p class="mb-0"><strong>Địa chỉ:</strong> @order.ShippingAddress</p>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <h5 class="text-danger">Tổng tiền: @order.TotalAmount.ToString("N0") ₫</h5>
+                        </div>
+                    </div>
+                    <a href="#" class="btn btn-sm btn-outline-primary">Xem chi tiết</a>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <i class="bi bi-inbox fs-1 text-muted"></i>
+            <h4 class="text-muted mt-3">Chưa có đơn hàng nào</h4>
+            <a asp-controller="Products" asp-action="Index" class="btn btn-primary mt-3">
+                <i class="bi bi-arrow-left"></i> Mua sắm ngay
+            </a>
+        </div>
+    }
+</div>
