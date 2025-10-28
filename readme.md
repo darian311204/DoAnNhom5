@@ -13,16 +13,29 @@
    }
    ```
 
-## Restore and build
+## Backend - Restore and build
    ```bash
+   cd DoAn-Backend
    dotnet restore
    dotnet build
    ```
 
-## Run 
+## Backend - Run 
    ```bash
    dotnet run
    ```
 
 ## Access Swagger
    Navigate to: `https://localhost:xxxx/swagger`
+
+## Frontend - Restore and build
+   ```bash
+   cd DoAn-Frotnend
+   dotnet restore
+   dotnet build
+   ```
+
+## Frontend - Run 
+   ```bash
+   dotnet run
+   ```
