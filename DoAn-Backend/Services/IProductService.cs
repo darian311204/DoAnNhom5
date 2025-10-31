@@ -12,8 +12,3 @@ namespace DoAn_Backend.Services
         Task<IEnumerable<Category>> GetAllCategoriesAsync();
     }
 }
-<<<<<<< HEAD
-
-
-=======
->>>>>>> parent of d4e55c3 (1)
