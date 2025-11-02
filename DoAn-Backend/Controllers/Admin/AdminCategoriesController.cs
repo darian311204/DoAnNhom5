@@ -1,3 +1,4 @@
+using DoAn_Backend.DTOs;
 using DoAn_Backend.Models;
 using DoAn_Backend.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -32,11 +33,14 @@ namespace DoAn_Backend.Controllers.Admin
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateCategory([FromBody] Category category)
+        public async Task<IActionResult> CreateCategory([FromBody] CreateCategoryDto dto)
         {
             try
             {
-                var result = await _adminService.CreateCategoryAsync(category);
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var result = await _adminService.CreateCategoryAsync(dto);
                 return CreatedAtAction(nameof(GetAllCategories), result);
             }
             catch (Exception ex)
@@ -46,12 +50,14 @@ namespace DoAn_Backend.Controllers.Admin
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateCategory(int id, [FromBody] Category category)
+        public async Task<IActionResult> UpdateCategory(int id, [FromBody] UpdateCategoryDto dto)
         {
             try
             {
-                category.CategoryID = id;
-                var result = await _adminService.UpdateCategoryAsync(category);
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var result = await _adminService.UpdateCategoryAsync(id, dto);
                 return Ok(result);
             }
             catch (Exception ex)

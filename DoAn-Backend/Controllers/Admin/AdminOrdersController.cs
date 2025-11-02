@@ -1,3 +1,4 @@
+using DoAn_Backend.DTOs;
 using DoAn_Backend.Models;
 using DoAn_Backend.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -55,6 +56,9 @@ namespace DoAn_Backend.Controllers.Admin
         {
             try
             {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
                 var result = await _adminService.UpdateOrderStatusAsync(id, dto.Status);
                 if (!result)
                     return NotFound();
@@ -66,10 +70,5 @@ namespace DoAn_Backend.Controllers.Admin
                 return BadRequest(new { message = ex.Message });
             }
         }
-    }
-
-    public class UpdateOrderStatusDto
-    {
-        public string Status { get; set; } = string.Empty;
     }
 }

@@ -1,3 +1,4 @@
+using DoAn_Backend.DTOs;
 using DoAn_Backend.Models;
 
 namespace DoAn_Backend.Services
@@ -5,13 +6,13 @@ namespace DoAn_Backend.Services
     public interface IAdminService
     {
         // Products
-        Task<Product> CreateProductAsync(Product product);
-        Task<Product> UpdateProductAsync(Product product);
+        Task<Product> CreateProductAsync(CreateProductDto dto);
+        Task<Product> UpdateProductAsync(int id, UpdateProductDto dto);
         Task<bool> DeleteProductAsync(int productId);
 
         // Categories
-        Task<Category> CreateCategoryAsync(Category category);
-        Task<Category> UpdateCategoryAsync(Category category);
+        Task<Category> CreateCategoryAsync(CreateCategoryDto dto);
+        Task<Category> UpdateCategoryAsync(int id, UpdateCategoryDto dto);
         Task<bool> DeleteCategoryAsync(int categoryId);
         Task<IEnumerable<Category>> GetAllCategoriesAsync();
 

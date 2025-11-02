@@ -1,3 +1,4 @@
+using DoAn_Backend.DTOs;
 using DoAn_Backend.Models;
 using DoAn_Backend.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -18,11 +19,14 @@ namespace DoAn_Backend.Controllers.Admin
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateProduct([FromBody] Product product)
+        public async Task<IActionResult> CreateProduct([FromBody] CreateProductDto dto)
         {
             try
             {
-                var result = await _adminService.CreateProductAsync(product);
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var result = await _adminService.CreateProductAsync(dto);
                 return CreatedAtAction(nameof(GetProduct), new { id = result.ProductID }, result);
             }
             catch (Exception ex)
@@ -32,12 +36,14 @@ namespace DoAn_Backend.Controllers.Admin
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateProduct(int id, [FromBody] Product product)
+        public async Task<IActionResult> UpdateProduct(int id, [FromBody] UpdateProductDto dto)
         {
             try
             {
-                product.ProductID = id;
-                var result = await _adminService.UpdateProductAsync(product);
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var result = await _adminService.UpdateProductAsync(id, dto);
                 return Ok(result);
             }
             catch (Exception ex)

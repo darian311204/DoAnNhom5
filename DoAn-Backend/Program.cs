@@ -57,6 +57,9 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 
+// Register HttpClient for DatabaseSeeder
+builder.Services.AddHttpClient();
+
 // Configure CORS with credentials support
 builder.Services.AddCors(options =>
 {
@@ -142,9 +145,13 @@ using (var scope = app.Services.CreateScope())
         var hasUsers = await db.Users.AnyAsync();
         if (!hasUsers)
         {
-            var seeder = new DoAn_Backend.Data.DatabaseSeeder(db);
+            var httpClientFactory = scope.ServiceProvider.GetRequiredService<IHttpClientFactory>();
+            var httpClient = httpClientFactory.CreateClient();
+            var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+            
+            var seeder = new DoAn_Backend.Data.DatabaseSeeder(db, httpClient, configuration);
             await seeder.SeedAsync();
-            logger.LogInformation("Database seeded successfully");
+            logger.LogInformation("Database seeded successfully via API");
         }
         else
         {

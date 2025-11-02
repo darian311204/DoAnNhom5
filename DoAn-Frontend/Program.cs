@@ -5,7 +5,19 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddHttpClient();
+builder.Services.AddHttpContextAccessor();
+
+// Register API Services
+builder.Services.AddScoped<IAuthApiService, AuthApiService>();
+builder.Services.AddScoped<IProductApiService, ProductApiService>();
+builder.Services.AddScoped<ICartApiService, CartApiService>();
+builder.Services.AddScoped<IOrderApiService, OrderApiService>();
+builder.Services.AddScoped<IReviewApiService, ReviewApiService>();
+builder.Services.AddScoped<IAdminApiService, AdminApiService>();
+
+// Keep ApiService for backward compatibility (will delegate to new services)
 builder.Services.AddScoped<ApiService>();
+
 builder.Services.AddDataProtection();
 builder.Services.AddSession(options =>
 {

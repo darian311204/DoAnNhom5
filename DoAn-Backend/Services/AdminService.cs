@@ -1,4 +1,5 @@
 using DoAn_Backend.Data;
+using DoAn_Backend.DTOs;
 using DoAn_Backend.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,17 +15,38 @@ namespace DoAn_Backend.Services
         }
 
         // Products
-        public async Task<Product> CreateProductAsync(Product product)
+        public async Task<Product> CreateProductAsync(CreateProductDto dto)
         {
-            product.CreatedAt = DateTime.Now;
-            product.IsActive = true;
+            var product = new Product
+            {
+                ProductName = dto.ProductName,
+                Price = dto.Price,
+                Description = dto.Description,
+                ImageURL = dto.ImageURL,
+                CategoryID = dto.CategoryID,
+                Stock = dto.Stock,
+                IsActive = dto.IsActive,
+                CreatedAt = DateTime.Now
+            };
             _context.Products.Add(product);
             await _context.SaveChangesAsync();
             return product;
         }
 
-        public async Task<Product> UpdateProductAsync(Product product)
+        public async Task<Product> UpdateProductAsync(int id, UpdateProductDto dto)
         {
+            var product = await _context.Products.FindAsync(id);
+            if (product == null)
+                throw new Exception("Product not found");
+
+            product.ProductName = dto.ProductName;
+            product.Price = dto.Price;
+            product.Description = dto.Description;
+            product.ImageURL = dto.ImageURL;
+            product.CategoryID = dto.CategoryID;
+            product.Stock = dto.Stock;
+            product.IsActive = dto.IsActive;
+
             _context.Products.Update(product);
             await _context.SaveChangesAsync();
             return product;
@@ -43,16 +65,29 @@ namespace DoAn_Backend.Services
         }
 
         // Categories
-        public async Task<Category> CreateCategoryAsync(Category category)
+        public async Task<Category> CreateCategoryAsync(CreateCategoryDto dto)
         {
-            category.IsActive = true;
+            var category = new Category
+            {
+                CategoryName = dto.CategoryName,
+                Description = dto.Description,
+                IsActive = dto.IsActive
+            };
             _context.Categories.Add(category);
             await _context.SaveChangesAsync();
             return category;
         }
 
-        public async Task<Category> UpdateCategoryAsync(Category category)
+        public async Task<Category> UpdateCategoryAsync(int id, UpdateCategoryDto dto)
         {
+            var category = await _context.Categories.FindAsync(id);
+            if (category == null)
+                throw new Exception("Category not found");
+
+            category.CategoryName = dto.CategoryName;
+            category.Description = dto.Description;
+            category.IsActive = dto.IsActive;
+
             _context.Categories.Update(category);
             await _context.SaveChangesAsync();
             return category;

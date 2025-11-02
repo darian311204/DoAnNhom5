@@ -1,15 +1,29 @@
+using DoAn_Backend.DTOs;
 using DoAn_Backend.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Net.Http.Json;
+using System.Net.Http.Headers;
+using System.Text.Json;
 
 namespace DoAn_Backend.Data
 {
     public class DatabaseSeeder
     {
         private readonly ApplicationDbContext _context;
+        private readonly HttpClient _httpClient;
+        private readonly IConfiguration _configuration;
+        private string? _adminToken;
 
-        public DatabaseSeeder(ApplicationDbContext context)
+        public DatabaseSeeder(ApplicationDbContext context, HttpClient httpClient, IConfiguration configuration)
         {
             _context = context;
+            _httpClient = httpClient;
+            _configuration = configuration;
+            
+            // Set base address for API calls
+            var baseUrl = _configuration["ApiBaseUrl"] ?? "http://localhost:5090/api";
+            _httpClient.BaseAddress = new Uri(baseUrl);
+            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
         public async Task SeedAsync()
@@ -19,72 +33,139 @@ namespace DoAn_Backend.Data
                 // Ensure database is created
                 await _context.Database.EnsureCreatedAsync();
 
-                // Seed only if database is empty
-                if (!_context.Users.Any())
+                // Check if database needs seeding
+                var hasUsers = await _context.Users.AnyAsync();
+                
+                if (!hasUsers)
                 {
+                    // First, login as admin or register admin user
+                    await AuthenticateAsAdmin();
+
+                    // Seed users through API
                     await SeedUsers();
-                }
 
-                if (!_context.Categories.Any())
-                {
+                    // Seed categories through API
                     await SeedCategories();
-                }
 
-                if (!_context.Products.Any())
-                {
+                    // Seed products through API
                     await SeedProducts();
                 }
-
-                await _context.SaveChangesAsync();
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error seeding database: {ex.Message}", ex);
+                throw new Exception($"Error seeding database via API: {ex.Message}", ex);
+            }
+        }
+
+        private async Task AuthenticateAsAdmin()
+        {
+            try
+            {
+                // Try to login as admin
+                var loginDto = new LoginDto
+                {
+                    Email = "admin@example.com",
+                    Password = "admin123"
+                };
+
+                var response = await _httpClient.PostAsJsonAsync("Auth/login", loginDto);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<AuthResponseDto>();
+                    _adminToken = result?.Token;
+                    
+                    if (!string.IsNullOrEmpty(_adminToken))
+                    {
+                        _httpClient.DefaultRequestHeaders.Authorization = 
+                            new AuthenticationHeaderValue("Bearer", _adminToken);
+                        return;
+                    }
+                }
+
+                // If login fails, register admin user first
+                var registerDto = new RegisterDto
+                {
+                    FullName = "Admin User",
+                    Email = "admin@example.com",
+                    Password = "admin123",
+                    Phone = "0123456789"
+                };
+
+                response = await _httpClient.PostAsJsonAsync("Auth/register", registerDto);
+                if (response.IsSuccessStatusCode)
+                {
+                    // After registration, login
+                    response = await _httpClient.PostAsJsonAsync("Auth/login", loginDto);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var result = await response.Content.ReadFromJsonAsync<AuthResponseDto>();
+                        _adminToken = result?.Token;
+                        
+                        if (!string.IsNullOrEmpty(_adminToken))
+                        {
+                            _httpClient.DefaultRequestHeaders.Authorization = 
+                                new AuthenticationHeaderValue("Bearer", _adminToken);
+                        }
+                    }
+
+                    // Update user role to Admin directly in DB (since register creates Customer)
+                    var adminUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == "admin@example.com");
+                    if (adminUser != null)
+                    {
+                        adminUser.Role = "Admin";
+                        await _context.SaveChangesAsync();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Warning: Could not authenticate as admin: {ex.Message}");
+                // If API authentication fails, we'll try to continue with direct DB access as fallback
             }
         }
 
         private async Task SeedUsers()
         {
-            // Check if admin already exists
-            if (await _context.Users.FirstOrDefaultAsync(u => u.Email == "admin@example.com") != null)
+            // Check if users already exist
+            if (await _context.Users.AnyAsync(u => u.Email == "customer1@example.com"))
                 return;
 
-            var users = new List<User>
+            // Register customer users through API
+            var customers = new[]
             {
-                new User
-                {
-                    FullName = "Admin User",
-                    Email = "admin@example.com",
-                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
-                    Phone = "0123456789",
-                    Role = "Admin",
-                    CreatedAt = DateTime.Now,
-                    IsActive = true
-                },
-                new User
+                new RegisterDto
                 {
                     FullName = "Customer One",
                     Email = "customer1@example.com",
-                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("customer123"),
-                    Phone = "0987654321",
-                    Role = "Customer",
-                    CreatedAt = DateTime.Now,
-                    IsActive = true
+                    Password = "customer123",
+                    Phone = "0987654321"
                 },
-                new User
+                new RegisterDto
                 {
                     FullName = "Customer Two",
                     Email = "customer2@example.com",
-                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("customer123"),
-                    Phone = "0912345678",
-                    Role = "Customer",
-                    CreatedAt = DateTime.Now,
-                    IsActive = true
+                    Password = "customer123",
+                    Phone = "0912345678"
                 }
             };
 
-            _context.Users.AddRange(users);
-            await _context.SaveChangesAsync();
+            foreach (var customer in customers)
+            {
+                try
+                {
+                    var response = await _httpClient.PostAsJsonAsync("Auth/register", customer);
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        var error = await response.Content.ReadAsStringAsync();
+                        Console.WriteLine($"Failed to register {customer.Email}: {error}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error registering {customer.Email}: {ex.Message}");
+                }
+            }
         }
 
         private async Task SeedCategories()
@@ -92,33 +173,33 @@ namespace DoAn_Backend.Data
             if (await _context.Categories.AnyAsync())
                 return;
 
-            var categories = new List<Category>
+            var categories = new[]
             {
-                new Category
+                new CreateCategoryDto
                 {
                     CategoryName = "Áo Nam",
                     Description = "Áo nam thời trang cao cấp",
                     IsActive = true
                 },
-                new Category
+                new CreateCategoryDto
                 {
                     CategoryName = "Áo Nữ",
                     Description = "Áo nữ thời trang đa dạng",
                     IsActive = true
                 },
-                new Category
+                new CreateCategoryDto
                 {
                     CategoryName = "Quần Nam",
                     Description = "Quần nam phong cách",
                     IsActive = true
                 },
-                new Category
+                new CreateCategoryDto
                 {
                     CategoryName = "Quần Nữ",
                     Description = "Quần nữ thời trang",
                     IsActive = true
                 },
-                new Category
+                new CreateCategoryDto
                 {
                     CategoryName = "Phụ Kiện",
                     Description = "Phụ kiện thời trang",
@@ -126,8 +207,22 @@ namespace DoAn_Backend.Data
                 }
             };
 
-            _context.Categories.AddRange(categories);
-            await _context.SaveChangesAsync();
+            foreach (var categoryDto in categories)
+            {
+                try
+                {
+                    var response = await _httpClient.PostAsJsonAsync("admin/Categories", categoryDto);
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        var error = await response.Content.ReadAsStringAsync();
+                        Console.WriteLine($"Failed to create category {categoryDto.CategoryName}: {error}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error creating category {categoryDto.CategoryName}: {ex.Message}");
+                }
+            }
         }
 
         private async Task SeedProducts()
@@ -142,10 +237,10 @@ namespace DoAn_Backend.Data
             var quanNu = await _context.Categories.FirstOrDefaultAsync(c => c.CategoryName == "Quần Nữ");
             var phuKien = await _context.Categories.FirstOrDefaultAsync(c => c.CategoryName == "Phụ Kiện");
 
-            var products = new List<Product>
+            var products = new[]
             {
                 // Áo Nam
-                new Product
+                new CreateProductDto
                 {
                     ProductName = "Áo Sơ Mi Nam Trắng",
                     Price = 350000,
@@ -153,10 +248,9 @@ namespace DoAn_Backend.Data
                     ImageURL = "/images/products/ao-so-mi-nam-trang.jpg",
                     CategoryID = aoNam?.CategoryID ?? 1,
                     Stock = 50,
-                    IsActive = true,
-                    CreatedAt = DateTime.Now
+                    IsActive = true
                 },
-                new Product
+                new CreateProductDto
                 {
                     ProductName = "Áo Thun Nam Basic",
                     Price = 150000,
@@ -164,10 +258,9 @@ namespace DoAn_Backend.Data
                     ImageURL = "/images/products/ao-thun-nam-basic.jpg",
                     CategoryID = aoNam?.CategoryID ?? 1,
                     Stock = 100,
-                    IsActive = true,
-                    CreatedAt = DateTime.Now
+                    IsActive = true
                 },
-                new Product
+                new CreateProductDto
                 {
                     ProductName = "Áo Polo Nam",
                     Price = 250000,
@@ -175,12 +268,11 @@ namespace DoAn_Backend.Data
                     ImageURL = "/images/products/ao-polo-nam.jpg",
                     CategoryID = aoNam?.CategoryID ?? 1,
                     Stock = 75,
-                    IsActive = true,
-                    CreatedAt = DateTime.Now
+                    IsActive = true
                 },
 
                 // Áo Nữ
-                new Product
+                new CreateProductDto
                 {
                     ProductName = "Áo Phông Nữ Dáng Rộng",
                     Price = 180000,
@@ -188,10 +280,9 @@ namespace DoAn_Backend.Data
                     ImageURL = "/images/products/ao-phong-nu.jpg",
                     CategoryID = aoNu?.CategoryID ?? 2,
                     Stock = 60,
-                    IsActive = true,
-                    CreatedAt = DateTime.Now
+                    IsActive = true
                 },
-                new Product
+                new CreateProductDto
                 {
                     ProductName = "Áo Sơ Mi Nữ Trắng",
                     Price = 320000,
@@ -199,12 +290,11 @@ namespace DoAn_Backend.Data
                     ImageURL = "/images/products/ao-so-mi-nu.jpg",
                     CategoryID = aoNu?.CategoryID ?? 2,
                     Stock = 45,
-                    IsActive = true,
-                    CreatedAt = DateTime.Now
+                    IsActive = true
                 },
 
                 // Quần Nam
-                new Product
+                new CreateProductDto
                 {
                     ProductName = "Quần Jean Nam Slim",
                     Price = 450000,
@@ -212,10 +302,9 @@ namespace DoAn_Backend.Data
                     ImageURL = "/images/products/quan-jean-nam.jpg",
                     CategoryID = quanNam?.CategoryID ?? 3,
                     Stock = 80,
-                    IsActive = true,
-                    CreatedAt = DateTime.Now
+                    IsActive = true
                 },
-                new Product
+                new CreateProductDto
                 {
                     ProductName = "Quần Kaki Nam",
                     Price = 380000,
@@ -223,12 +312,11 @@ namespace DoAn_Backend.Data
                     ImageURL = "/images/products/quan-kaki-nam.jpg",
                     CategoryID = quanNam?.CategoryID ?? 3,
                     Stock = 65,
-                    IsActive = true,
-                    CreatedAt = DateTime.Now
+                    IsActive = true
                 },
 
                 // Quần Nữ
-                new Product
+                new CreateProductDto
                 {
                     ProductName = "Quần Jean Nữ Ống Rộng",
                     Price = 420000,
@@ -236,10 +324,9 @@ namespace DoAn_Backend.Data
                     ImageURL = "/images/products/quan-jean-nu.jpg",
                     CategoryID = quanNu?.CategoryID ?? 4,
                     Stock = 70,
-                    IsActive = true,
-                    CreatedAt = DateTime.Now
+                    IsActive = true
                 },
-                new Product
+                new CreateProductDto
                 {
                     ProductName = "Quần Short Nữ",
                     Price = 220000,
@@ -247,12 +334,11 @@ namespace DoAn_Backend.Data
                     ImageURL = "/images/products/quan-short-nu.jpg",
                     CategoryID = quanNu?.CategoryID ?? 4,
                     Stock = 55,
-                    IsActive = true,
-                    CreatedAt = DateTime.Now
+                    IsActive = true
                 },
 
                 // Phụ Kiện
-                new Product
+                new CreateProductDto
                 {
                     ProductName = "Túi Xách Da",
                     Price = 550000,
@@ -260,10 +346,9 @@ namespace DoAn_Backend.Data
                     ImageURL = "/images/products/tui-xach-da.jpg",
                     CategoryID = phuKien?.CategoryID ?? 5,
                     Stock = 30,
-                    IsActive = true,
-                    CreatedAt = DateTime.Now
+                    IsActive = true
                 },
-                new Product
+                new CreateProductDto
                 {
                     ProductName = "Thắt Lưng Da",
                     Price = 280000,
@@ -271,10 +356,9 @@ namespace DoAn_Backend.Data
                     ImageURL = "/images/products/that-lung-da.jpg",
                     CategoryID = phuKien?.CategoryID ?? 5,
                     Stock = 40,
-                    IsActive = true,
-                    CreatedAt = DateTime.Now
+                    IsActive = true
                 },
-                new Product
+                new CreateProductDto
                 {
                     ProductName = "Mũ Lưỡi Trai",
                     Price = 180000,
@@ -282,13 +366,26 @@ namespace DoAn_Backend.Data
                     ImageURL = "/images/products/mu-luoi-trai.jpg",
                     CategoryID = phuKien?.CategoryID ?? 5,
                     Stock = 50,
-                    IsActive = true,
-                    CreatedAt = DateTime.Now
+                    IsActive = true
                 }
             };
 
-            _context.Products.AddRange(products);
-            await _context.SaveChangesAsync();
+            foreach (var productDto in products)
+            {
+                try
+                {
+                    var response = await _httpClient.PostAsJsonAsync("admin/Products", productDto);
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        var error = await response.Content.ReadAsStringAsync();
+                        Console.WriteLine($"Failed to create product {productDto.ProductName}: {error}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error creating product {productDto.ProductName}: {ex.Message}");
+                }
+            }
         }
     }
 }
