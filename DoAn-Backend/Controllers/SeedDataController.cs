@@ -1,32 +1,39 @@
+using DoAn_Backend.Data;
 using DoAn_Backend.DTOs;
 using DoAn_Backend.Models;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Net.Http.Json;
 using System.Net.Http.Headers;
-using System.Text.Json;
+using System.Net.Http.Json;
 
-namespace DoAn_Backend.Data
+namespace DoAn_Backend.Controllers
 {
-    public class DatabaseSeeder
+    [ApiController]
+    [Route("api/[controller]")]
+    public class SeedDataController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _configuration;
         private string? _adminToken;
 
-        public DatabaseSeeder(ApplicationDbContext context, HttpClient httpClient, IConfiguration configuration)
+        public SeedDataController(
+            ApplicationDbContext context,
+            HttpClient httpClient,
+            IConfiguration configuration)
         {
             _context = context;
             _httpClient = httpClient;
             _configuration = configuration;
-            
+
             // Set base address for API calls
             var baseUrl = _configuration["ApiBaseUrl"] ?? "http://localhost:5090/api";
             _httpClient.BaseAddress = new Uri(baseUrl);
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
-        public async Task SeedAsync()
+        [HttpPost]
+        public async Task<IActionResult> SeedData()
         {
             try
             {
@@ -35,25 +42,29 @@ namespace DoAn_Backend.Data
 
                 // Check if database needs seeding
                 var hasUsers = await _context.Users.AnyAsync();
-                
-                if (!hasUsers)
+
+                if (hasUsers)
                 {
-                    // First, login as admin or register admin user
-                    await AuthenticateAsAdmin();
-
-                    // Seed users through API
-                    await SeedUsers();
-
-                    // Seed categories through API
-                    await SeedCategories();
-
-                    // Seed products through API
-                    await SeedProducts();
+                    return Ok(new { message = "Database already contains data, skipping seed", seeded = false });
                 }
+
+                // First, login as admin or register admin user
+                await AuthenticateAsAdmin();
+
+                // Seed users through API
+                await SeedUsers();
+
+                // Seed categories through API
+                await SeedCategories();
+
+                // Seed products through API
+                await SeedProducts();
+
+                return Ok(new { message = "Database seeded successfully via API", seeded = true });
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error seeding database via API: {ex.Message}", ex);
+                return StatusCode(500, new { message = $"Error seeding database via API: {ex.Message}", error = ex.ToString() });
             }
         }
 
@@ -69,15 +80,15 @@ namespace DoAn_Backend.Data
                 };
 
                 var response = await _httpClient.PostAsJsonAsync("Auth/login", loginDto);
-                
+
                 if (response.IsSuccessStatusCode)
                 {
                     var result = await response.Content.ReadFromJsonAsync<AuthResponseDto>();
                     _adminToken = result?.Token;
-                    
+
                     if (!string.IsNullOrEmpty(_adminToken))
                     {
-                        _httpClient.DefaultRequestHeaders.Authorization = 
+                        _httpClient.DefaultRequestHeaders.Authorization =
                             new AuthenticationHeaderValue("Bearer", _adminToken);
                         return;
                     }
@@ -101,10 +112,10 @@ namespace DoAn_Backend.Data
                     {
                         var result = await response.Content.ReadFromJsonAsync<AuthResponseDto>();
                         _adminToken = result?.Token;
-                        
+
                         if (!string.IsNullOrEmpty(_adminToken))
                         {
-                            _httpClient.DefaultRequestHeaders.Authorization = 
+                            _httpClient.DefaultRequestHeaders.Authorization =
                                 new AuthenticationHeaderValue("Bearer", _adminToken);
                         }
                     }
@@ -121,7 +132,6 @@ namespace DoAn_Backend.Data
             catch (Exception ex)
             {
                 Console.WriteLine($"Warning: Could not authenticate as admin: {ex.Message}");
-                // If API authentication fails, we'll try to continue with direct DB access as fallback
             }
         }
 

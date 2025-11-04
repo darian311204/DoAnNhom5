@@ -57,7 +57,7 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 
-// Register HttpClient for DatabaseSeeder
+// Register HttpClient
 builder.Services.AddHttpClient();
 
 // Configure CORS with credentials support
@@ -129,7 +129,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Apply database migrations and seed data
+// Ensure database exists
 using (var scope = app.Services.CreateScope())
 {
     try
@@ -137,31 +137,13 @@ using (var scope = app.Services.CreateScope())
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
         
-        // Ensure database exists
         await db.Database.EnsureCreatedAsync();
-        logger.LogInformation("Database ensured");
-
-        // Check if database needs seeding
-        var hasUsers = await db.Users.AnyAsync();
-        if (!hasUsers)
-        {
-            var httpClientFactory = scope.ServiceProvider.GetRequiredService<IHttpClientFactory>();
-            var httpClient = httpClientFactory.CreateClient();
-            var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
-            
-            var seeder = new DoAn_Backend.Data.DatabaseSeeder(db, httpClient, configuration);
-            await seeder.SeedAsync();
-            logger.LogInformation("Database seeded successfully via API");
-        }
-        else
-        {
-            logger.LogInformation("Database already contains data, skipping seed");
-        }
+        logger.LogInformation("Database ensured. Use POST /api/SeedData to seed initial data.");
     }
     catch (Exception ex)
     {
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Error occurred seeding the database");
+        logger.LogError(ex, "Error occurred ensuring database");
     }
 }
 
