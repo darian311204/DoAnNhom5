@@ -1,5 +1,6 @@
 using DoAn_Frontend.Services;
-
+using Microsoft.Extensions.FileProviders;
+using System.IO;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -24,6 +25,12 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Uploads")),
+    RequestPath = "/images/products"
+});
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();

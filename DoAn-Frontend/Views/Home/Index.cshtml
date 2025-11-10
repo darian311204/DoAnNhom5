@@ -59,43 +59,44 @@
     <!-- Categories -->
     <h3 class="text-center mb-4 fw-bold"><i class="bi bi-star text-warning"></i> Danh Mục Nổi Bật</h3>
     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 mb-5">
-        <div class="col">
-            <div class="card product-card border-0 h-100">
-                <img src="https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400" class="card-img-top" style="height: 250px; object-fit: cover;" alt="Áo">
-                <div class="card-body text-center">
-                    <h5 class="card-title fw-bold">Áo Nam</h5>
-                    <a asp-controller="Products" asp-action="Index" class="btn btn-primary">Xem ngay</a>
-                </div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="card product-card border-0 h-100">
-                <img src="https://images.unsplash.com/photo-1542272604-787c133553f3?w=400" class="card-img-top" style="height: 250px; object-fit: cover;" alt="Quần">
-                <div class="card-body text-center">
-                    <h5 class="card-title fw-bold">Quần Nam</h5>
-                    <a asp-controller="Products" asp-action="Index" class="btn btn-primary">Xem ngay</a>
-                </div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="card product-card border-0 h-100">
-                <img src="https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400" class="card-img-top" style="height: 250px; object-fit: cover;" alt="Giày">
-                <div class="card-body text-center">
-                    <h5 class="card-title fw-bold">Giày Dép</h5>
-                    <a asp-controller="Products" asp-action="Index" class="btn btn-primary">Xem ngay</a>
-                </div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="card product-card border-0 h-100">
-                <img src="https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=400" class="card-img-top" style="height: 250px; object-fit: cover;" alt="Phụ kiện">
-                <div class="card-body text-center">
-                    <h5 class="card-title fw-bold">Phụ Kiện</h5>
-                    <a asp-controller="Products" asp-action="Index" class="btn btn-primary">Xem ngay</a>
-                </div>
+    <div class="col">
+        <div class="card product-card border-0 h-100">
+            <img src="~/Uploads/ao-nam.jpg" class="card-img-top" style="height: 250px; object-fit: cover;" alt="Áo Nam">
+            <div class="card-body text-center">
+                <h5 class="card-title fw-bold">Áo Nam</h5>
+                <a asp-controller="Products" asp-action="Index" asp-route-category="AoNam" class="btn btn-primary">Xem ngay</a>
             </div>
         </div>
     </div>
+    <div class="col">
+        <div class="card product-card border-0 h-100">
+            <img src="~/Uploads/quan-nam.jpg" class="card-img-top" style="height: 250px; object-fit: cover;" alt="Quần Nam">
+            <div class="card-body text-center">
+                <h5 class="card-title fw-bold">Quần Nam</h5>
+                <a asp-controller="Products" asp-action="Index" asp-route-category="QuanNam" class="btn btn-primary">Xem ngay</a>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card product-card border-0 h-100">
+            <img src="~/Uploads/giay-dep.jpg" class="card-img-top" style="height: 250px; object-fit: cover;" alt="Giày Dép">
+            <div class="card-body text-center">
+                <h5 class="card-title fw-bold">Giày Dép</h5>
+                <a asp-controller="Products" asp-action="Index" asp-route-category="GiayDep" class="btn btn-primary">Xem ngay</a>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card product-card border-0 h-100">
+            <img src="~/Uploads/phu-kien.jpg" class="card-img-top" style="height: 250px; object-fit: cover;" alt="Phụ Kiện">
+            <div class="card-body text-center">
+                <h5 class="card-title fw-bold">Phụ Kiện</h5>
+                <a asp-controller="Products" asp-action="Index" asp-route-category="PhuKien" class="btn btn-primary">Xem ngay</a>
+            </div>
+        </div>
+    </div>
+</div>
+
 
     <!-- Featured Products -->
     <h3 class="text-center mb-4 fw-bold"><i class="bi bi-fire text-danger"></i> Sản Phẩm Nổi Bật</h3>
@@ -105,7 +106,14 @@
             <div class="col">
                 <div class="card product-card border-0 h-100">
                     <a asp-controller="Products" asp-action="Details" asp-route-id="@product.ProductID" class="text-decoration-none text-dark">
-                        <img src="@product.ImageURL" class="card-img-top" style="height: 250px; object-fit: cover;" alt="@product.ProductName" onerror="this.src='https://via.placeholder.com/300x300'">
+                       <img src="@Url.Content(product.ImageURL.StartsWith("/") 
+            ? "~" + product.ImageURL 
+            : "~/Uploads/" + product.ImageURL)"
+     class="card-img-top"
+     style="height: 250px; object-fit: cover;"
+     alt="@product.ProductName"
+     onerror="this.src='https://via.placeholder.com/300x300?text=No+Image'">
+
                     </a>
                     <div class="card-body text-center">
                         <h6 class="card-title fw-bold">@product.ProductName</h6>

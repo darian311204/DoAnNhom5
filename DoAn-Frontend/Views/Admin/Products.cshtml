@@ -109,7 +109,7 @@
                     
                     <div class="mb-3">
                         <label class="form-label">Đường dẫn ảnh</label>
-                        <input type="url" class="form-control" id="ImageURL" name="ImageURL" placeholder="https://example.com/image.jpg">
+                        <input type="text" class="form-control" id="imagePath" name="ImagePath" required>
                     </div>
                     
                     <div class="mb-3">
@@ -166,7 +166,7 @@ function openEditModal(id) {
             document.getElementById('Price').value = product.price || product.Price;
             document.getElementById('Stock').value = product.stock || product.Stock;
             document.getElementById('CategoryID').value = product.categoryID || product.CategoryID;
-            document.getElementById('ImageURL').value = product.imageURL || product.ImageURL || '';
+            document.getElementById('imagePath').value = product.imageURL || product.ImageURL || product.imagePath || product.ImagePath || '';
             document.getElementById('Description').value = product.description || product.Description || '';
             
             // Handle IsActive - can be boolean true/false or string
