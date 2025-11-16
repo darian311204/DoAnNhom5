@@ -14,7 +14,7 @@ namespace DoAn_Frontend.Controllers
             ViewBag.Categories = await _apiService.GetCategoriesAsync() ?? new List<Models.Category>();
             ViewBag.IsAuthenticated = _apiService.IsAuthenticated();
             var products = await _apiService.GetProductsAsync();
-            return View(products?.Take(8).ToList() ?? new List<Models.Product>());
+            return View(products?.ToList() ?? new List<Models.Product>());
         }
     }
 }

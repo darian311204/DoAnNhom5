@@ -36,5 +36,34 @@ namespace DoAn_Frontend.Controllers
             ViewBag.IsAuthenticated = _apiService.IsAuthenticated();
             return View(product);
         }
+
+        [HttpPost]
+        public async Task<IActionResult> AddReview([FromBody] ReviewRequest request)
+        {
+            if (!_apiService.IsAuthenticated())
+            {
+                return Unauthorized(new { success = false, message = "Vui lòng đăng nhập để đánh giá sản phẩm." });
+            }
+
+            if (request.Rating < 1 || request.Rating > 5)
+            {
+                return BadRequest(new { success = false, message = "Điểm đánh giá phải từ 1 đến 5 sao." });
+            }
+
+            var success = await _apiService.AddReviewAsync(request.ProductId, request.Rating, request.Comment ?? string.Empty);
+            if (!success)
+            {
+                return BadRequest(new { success = false, message = "Không thể gửi đánh giá. Vui lòng thử lại." });
+            }
+
+            return Ok(new { success = true });
+        }
+    }
+
+    public class ReviewRequest
+    {
+        public int ProductId { get; set; }
+        public int Rating { get; set; }
+        public string? Comment { get; set; }
     }
 }

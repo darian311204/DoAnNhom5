@@ -29,6 +29,10 @@
                         </div>
                         <div class="col-md-6 text-end">
                             <h5 class="text-danger">Tổng tiền: @order.TotalAmount.ToString("N0") ₫</h5>
+                            @if (order.Status == "Cancelled" && !string.IsNullOrEmpty(order.CancelReason))
+                            {
+                                <p class="text-muted mt-2"><strong>Lý do hủy:</strong> @order.CancelReason</p>
+                            }
                         </div>
                     </div>
                     <a href="#" class="btn btn-sm btn-outline-primary">Xem chi tiết</a>

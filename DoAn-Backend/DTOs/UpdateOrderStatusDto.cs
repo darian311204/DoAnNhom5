@@ -7,6 +7,9 @@ namespace DoAn_Backend.DTOs
         [Required]
         [StringLength(50)]
         public string Status { get; set; } = string.Empty;
+
+        [StringLength(200)]
+        public string? CancelReason { get; set; }
     }
 }
 

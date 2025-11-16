@@ -88,6 +88,44 @@
                 <p class="text-muted">Chưa có đánh giá nào</p>
             }
         </div>
+
+        <div class="col-md-4">
+            @if (ViewBag.IsLoggedIn != null && (bool)ViewBag.IsLoggedIn)
+            {
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Viết đánh giá của bạn</h5>
+                        <form id="reviewForm">
+                            <input type="hidden" id="reviewProductId" value="@Model.ProductID" />
+
+                            <div class="mb-3">
+                                <label class="form-label">Đánh giá</label>
+                                <div id="ratingStars">
+                                    @for (int i = 1; i <= 5; i++)
+                                    {
+                                        <i class="bi bi-star star-selectable" data-value="@i" style="cursor:pointer; font-size:1.3rem;"></i>
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Nhận xét</label>
+                                <textarea class="form-control" id="reviewComment" rows="3" placeholder="Chia sẻ cảm nhận của bạn"></textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100">Gửi đánh giá</button>
+                        </form>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> Vui lòng
+                    <a href="@Url.Action("Login", "Auth")">đăng nhập</a> để viết đánh giá.
+                </div>
+            }
+        </div>
     </div>
 </div>
 
@@ -96,14 +134,66 @@
 let selectedRating = 0;
 
 function highlightStars(rating) {
-    $('.star').each(function(i) {
-        if (i < rating) {
+    $('.star-selectable').each(function () {
+        const starValue = parseInt($(this).data('value'));
+        if (starValue <= rating) {
             $(this).removeClass('bi-star').addClass('bi-star-fill text-warning');
         } else {
-            $(this).removeClass('bi-star-fill').addClass('bi-star');
+            $(this).removeClass('bi-star-fill text-warning').addClass('bi-star');
         }
     });
 }
+
+$(function () {
+    // Rating star interactions for review form
+    $('.star-selectable').on('mouseover', function () {
+        const rating = parseInt($(this).data('value'));
+        highlightStars(rating);
+    }).on('mouseout', function () {
+        highlightStars(selectedRating);
+    }).on('click', function () {
+        selectedRating = parseInt($(this).data('value'));
+    });
+
+    // Submit review
+    $('#reviewForm').on('submit', function (e) {
+        e.preventDefault();
+
+        if (selectedRating === 0) {
+            showToast('danger', 'Vui lòng chọn số sao đánh giá!');
+            return;
+        }
+
+        const productId = parseInt($('#reviewProductId').val());
+        const comment = $('#reviewComment').val();
+
+        fetch('@Url.Action("AddReview", "Products")', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ productId, rating: selectedRating, comment })
+        })
+            .then(r => {
+                if (!r.ok) return r.json().then(err => Promise.reject(err));
+                return r.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showToast('success', 'Cảm ơn bạn đã đánh giá sản phẩm!');
+                    setTimeout(() => location.reload(), 1200);
+                } else {
+                    showToast('danger', data.message || 'Không thể gửi đánh giá. Vui lòng thử lại.');
+                }
+            })
+            .catch(err => {
+                console.error('Review error:', err);
+                if (err && err.message) {
+                    showToast('danger', err.message);
+                } else {
+                    showToast('danger', 'Có lỗi xảy ra khi gửi đánh giá.');
+                }
+            });
+    });
+});
 
 function decreaseQuantity() {
     var qty = parseInt($('#quantity').val());

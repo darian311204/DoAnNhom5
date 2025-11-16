@@ -1,3 +1,5 @@
+using DoAn_Frontend.Models;
+
 namespace DoAn_Frontend.Services
 {
     public interface IAuthApiService

@@ -56,51 +56,88 @@
 </div>
 
 <div class="container">
-    <!-- Categories -->
+    <!-- Dynamic Categories -->
     <h3 class="text-center mb-4 fw-bold"><i class="bi bi-star text-warning"></i> Danh Mục Nổi Bật</h3>
     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 mb-5">
-        <div class="col">
-            <div class="card product-card border-0 h-100">
-                <img src="https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400" class="card-img-top" style="height: 250px; object-fit: cover;" alt="Áo">
-                <div class="card-body text-center">
-                    <h5 class="card-title fw-bold">Áo Nam</h5>
-                    <a asp-controller="Products" asp-action="Index" class="btn btn-primary">Xem ngay</a>
+        @if (ViewBag.Categories != null)
+        {
+            var categories = ViewBag.Categories as List<Category>;
+            foreach (var cat in categories!.Take(8))
+            {
+                <div class="col">
+                    <div class="card product-card border-0 h-100">
+                        <div class="card-body text-center d-flex flex-column justify-content-between">
+                            <div>
+                                <h5 class="card-title fw-bold mb-2">@cat.CategoryName</h5>
+                                <p class="text-muted small">@(!string.IsNullOrEmpty(cat.Description) ? cat.Description : "Khám phá các sản phẩm trong danh mục này")</p>
+                            </div>
+                            <a asp-controller="Products"
+                               asp-action="Index"
+                               asp-route-categoryId="@cat.CategoryID"
+                               class="btn btn-outline-primary mt-2">
+                                Xem @cat.CategoryName
+                            </a>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="card product-card border-0 h-100">
-                <img src="https://images.unsplash.com/photo-1542272604-787c133553f3?w=400" class="card-img-top" style="height: 250px; object-fit: cover;" alt="Quần">
-                <div class="card-body text-center">
-                    <h5 class="card-title fw-bold">Quần Nam</h5>
-                    <a asp-controller="Products" asp-action="Index" class="btn btn-primary">Xem ngay</a>
-                </div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="card product-card border-0 h-100">
-                <img src="https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400" class="card-img-top" style="height: 250px; object-fit: cover;" alt="Giày">
-                <div class="card-body text-center">
-                    <h5 class="card-title fw-bold">Giày Dép</h5>
-                    <a asp-controller="Products" asp-action="Index" class="btn btn-primary">Xem ngay</a>
-                </div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="card product-card border-0 h-100">
-                <img src="https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=400" class="card-img-top" style="height: 250px; object-fit: cover;" alt="Phụ kiện">
-                <div class="card-body text-center">
-                    <h5 class="card-title fw-bold">Phụ Kiện</h5>
-                    <a asp-controller="Products" asp-action="Index" class="btn btn-primary">Xem ngay</a>
-                </div>
-            </div>
-        </div>
+            }
+        }
+        else
+        {
+            <p class="text-center text-muted">Chưa có danh mục nào.</p>
+        }
     </div>
 
-    <!-- Featured Products -->
-    <h3 class="text-center mb-4 fw-bold"><i class="bi bi-fire text-danger"></i> Sản Phẩm Nổi Bật</h3>
+    @{
+        var newest = Model
+            .OrderByDescending(p => p.CreatedAt)
+            .Take(4)
+            .ToList();
+        var featured = Model
+            .OrderByDescending(p => p.Stock > 0)
+            .ThenBy(p => p.Price)
+            .Take(8)
+            .ToList();
+    }
+
+    <!-- Newest Products -->
+    <h3 class="text-center mb-4 fw-bold"><i class="bi bi-clock-history text-primary"></i> Sản Phẩm Mới</h3>
     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 mb-5">
-        @foreach (var product in Model)
+        @foreach (var product in newest)
+        {
+            <div class="col">
+                <div class="card product-card border-0 h-100">
+                    <a asp-controller="Products" asp-action="Details" asp-route-id="@product.ProductID" class="text-decoration-none text-dark">
+                        <img src="@product.ImageURL" class="card-img-top" style="height: 250px; object-fit: cover;" alt="@product.ProductName" onerror="this.src='https://via.placeholder.com/300x300'">
+                    </a>
+                    <div class="card-body text-center">
+                        <span class="badge bg-primary mb-2">Mới</span>
+                        <h6 class="card-title fw-bold">@product.ProductName</h6>
+                        <p class="text-danger fw-bold fs-5 mb-2">@product.Price.ToString("N0") ₫</p>
+                    </div>
+                    <div class="card-footer bg-white border-0">
+                        @if (ViewBag.IsAuthenticated != null && (bool)ViewBag.IsAuthenticated)
+                        {
+                            <button class="btn btn-primary w-100 add-to-cart-btn" data-product-id="@product.ProductID" data-quantity="1">
+                                <i class="bi bi-cart-plus"></i> Thêm vào giỏ
+                            </button>
+                        }
+                        else
+                        {
+                            <a class="btn btn-primary w-100" href="@Url.Action("Login", "Auth")">
+                                <i class="bi bi-box-arrow-in-right"></i> Đăng nhập để mua
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Featured / Recommended Products -->
+    <h3 class="text-center mb-4 fw-bold"><i class="bi bi-heart-fill text-danger"></i> Gợi Ý Cho Bạn</h3>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 mb-5">
+        @foreach (var product in featured)
         {
             <div class="col">
                 <div class="card product-card border-0 h-100">
@@ -122,13 +159,13 @@
                     <div class="card-footer bg-white border-0">
                         @if (ViewBag.IsAuthenticated != null && (bool)ViewBag.IsAuthenticated)
                         {
-                            <button class="btn btn-primary w-100 add-to-cart-btn" data-product-id="@product.ProductID" data-quantity="1">
+                            <button class="btn btn-outline-primary w-100 add-to-cart-btn" data-product-id="@product.ProductID" data-quantity="1">
                                 <i class="bi bi-cart-plus"></i> Thêm vào giỏ
                             </button>
                         }
                         else
                         {
-                            <a class="btn btn-primary w-100" href="@Url.Action("Login", "Auth")">
+                            <a class="btn btn-outline-primary w-100" href="@Url.Action("Login", "Auth")">
                                 <i class="bi bi-box-arrow-in-right"></i> Đăng nhập để mua
                             </a>
                         }

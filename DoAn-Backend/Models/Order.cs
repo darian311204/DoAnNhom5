@@ -16,7 +16,10 @@ namespace DoAn_Backend.Models
 
         [Required]
         [StringLength(50)]
-        public string Status { get; set; } = "Pending"; // Pending, Confirmed, Shipping, Delivered, Cancelled
+        public string Status { get; set; } = "Pending"; // Pending, Shipping, Shipped, Cancelled
+
+        [StringLength(200)]
+        public string? CancelReason { get; set; }
 
         [StringLength(200)]
         public string? ShippingAddress { get; set; }

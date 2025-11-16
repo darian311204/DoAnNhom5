@@ -6,6 +6,7 @@ namespace DoAn_Frontend.Services
     {
         // Orders
         Task<List<Order>?> GetAdminOrdersAsync();
+        Task<bool> UpdateOrderStatusAsync(int orderId, string status, string? cancelReason);
 
         // Products
         Task<bool> CreateProductAsync(Product product);

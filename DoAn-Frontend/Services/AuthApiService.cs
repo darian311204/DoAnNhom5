@@ -63,6 +63,14 @@ namespace DoAn_Frontend.Services
                 throw; // Re-throw to be caught by controller
             }
         }
+
+        // The following methods are inherited from BaseApiService,
+        // but explicitly implement the interface for clarity.
+        public new void Logout() => base.Logout();
+        public new bool IsAuthenticated() => base.IsAuthenticated();
+        public new bool IsAdmin() => base.IsAdmin();
+        public new User? GetCurrentUser() => base.GetCurrentUser();
+        public new bool IsTokenExpired() => base.IsTokenExpired();
     }
 }
 

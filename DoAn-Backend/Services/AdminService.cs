@@ -158,6 +158,10 @@ namespace DoAn_Backend.Services
             if (order == null) return false;
 
             order.Status = status;
+            if (status == "Cancelled")
+            {
+                // Keep cancel reason if set elsewhere; no-op here
+            }
             _context.Orders.Update(order);
             await _context.SaveChangesAsync();
             return true;

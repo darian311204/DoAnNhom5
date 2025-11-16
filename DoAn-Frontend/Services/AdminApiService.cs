@@ -17,13 +17,30 @@ namespace DoAn_Frontend.Services
             return response.IsSuccessStatusCode ? await response.Content.ReadFromJsonAsync<List<Order>>() : new List<Order>();
         }
 
+        public async Task<bool> UpdateOrderStatusAsync(int orderId, string status, string? cancelReason)
+        {
+            try
+            {
+                var content = JsonContent.Create(new { Status = status, CancelReason = cancelReason });
+                var request = CreateRequest(HttpMethod.Put, $"admin/Orders/{orderId}/status", content);
+                var response = await _httpClient.SendAsync(request);
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Update order status error: {ex.Message}");
+                return false;
+            }
+        }
+
         // Products
         public async Task<bool> CreateProductAsync(Product product)
         {
             try
             {
                 var content = JsonContent.Create(product);
-                var request = CreateRequest(HttpMethod.Post, "api/admin/Products", content);
+                // BackendUrl already ends with "/api/", so we just append the admin route segment.
+                var request = CreateRequest(HttpMethod.Post, "admin/Products", content);
                 var response = await _httpClient.SendAsync(request);
                 return response.IsSuccessStatusCode;
             }
@@ -68,7 +85,7 @@ namespace DoAn_Frontend.Services
             try
             {
                 var content = JsonContent.Create(product);
-                var request = CreateRequest(HttpMethod.Put, $"api/admin/Products/{product.ProductID}", content);
+                var request = CreateRequest(HttpMethod.Put, $"admin/Products/{product.ProductID}", content);
                 var response = await _httpClient.SendAsync(request);
                 return response.IsSuccessStatusCode;
             }
@@ -83,7 +100,7 @@ namespace DoAn_Frontend.Services
         {
             try
             {
-                var request = CreateRequest(HttpMethod.Delete, $"api/admin/Products/{productId}");
+                var request = CreateRequest(HttpMethod.Delete, $"admin/Products/{productId}");
                 var response = await _httpClient.SendAsync(request);
                 return response.IsSuccessStatusCode;
             }

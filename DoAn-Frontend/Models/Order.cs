@@ -7,6 +7,7 @@ namespace DoAn_Frontend.Models
         public DateTime OrderDate { get; set; }
         public decimal TotalAmount { get; set; }
         public string Status { get; set; } = "Pending";
+        public string? CancelReason { get; set; }
         public string? ShippingAddress { get; set; }
         public string? Phone { get; set; }
         public string? RecipientName { get; set; }
