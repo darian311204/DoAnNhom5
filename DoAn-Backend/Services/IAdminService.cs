@@ -24,7 +24,7 @@ namespace DoAn_Backend.Services
 
         // Orders
         Task<IEnumerable<Order>> GetAllOrdersAsync();
-        Task<bool> UpdateOrderStatusAsync(int orderId, string status);
+        Task<bool> UpdateOrderStatusAsync(int orderId, string status, string? cancelReason = null);
 
         // Reviews
         Task<IEnumerable<Review>> GetAllReviewsAsync();

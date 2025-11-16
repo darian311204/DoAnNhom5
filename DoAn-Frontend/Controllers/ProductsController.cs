@@ -9,10 +9,15 @@ namespace DoAn_Frontend.Controllers
 
         public ProductsController(ApiService apiService) => _apiService = apiService;
 
-        public async Task<IActionResult> Index(string? search, int? categoryId)
+        public async Task<IActionResult> Index(string? search, int? categoryId, decimal? minPrice, decimal? maxPrice, int page = 1)
         {
+            const int pageSize = 12;
+            
             ViewBag.Categories = await _apiService.GetCategoriesAsync() ?? new List<Models.Category>();
             ViewBag.SelectedCategory = categoryId;
+            ViewBag.SearchTerm = search;
+            ViewBag.MinPrice = minPrice;
+            ViewBag.MaxPrice = maxPrice;
             ViewBag.IsAuthenticated = _apiService.IsAuthenticated();
 
             List<Models.Product> products;
@@ -23,7 +28,23 @@ namespace DoAn_Frontend.Controllers
             else
                 products = await _apiService.GetProductsAsync() ?? new List<Models.Product>();
 
-            return View(products);
+            // Apply price filter
+            if (minPrice.HasValue)
+                products = products.Where(p => p.Price >= minPrice.Value).ToList();
+            if (maxPrice.HasValue)
+                products = products.Where(p => p.Price <= maxPrice.Value).ToList();
+
+            // Pagination
+            var totalItems = products.Count;
+            var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+            var pagedProducts = products.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = totalPages;
+            ViewBag.TotalItems = totalItems;
+            ViewBag.PageSize = pageSize;
+
+            return View(pagedProducts);
         }
 
         public async Task<IActionResult> Details(int id)

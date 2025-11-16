@@ -11,10 +11,24 @@ namespace DoAn_Frontend.Services
 
         public async Task<Order?> CreateOrderAsync(string shippingAddress, string phone, string recipientName)
         {
-            var content = JsonContent.Create(new { shippingAddress, phone, recipientName });
+            // Use PascalCase property names to match backend CheckoutDto
+            var content = JsonContent.Create(new
+            {
+                ShippingAddress = shippingAddress,
+                Phone = phone,
+                RecipientName = recipientName
+            });
             var request = CreateRequest(HttpMethod.Post, "Orders/checkout", content);
             var response = await _httpClient.SendAsync(request);
-            return response.IsSuccessStatusCode ? await response.Content.ReadFromJsonAsync<Order>() : null;
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadFromJsonAsync<Order>();
+            }
+
+            // Read error content for debugging / propagation
+            var error = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"CreateOrderAsync failed: {response.StatusCode} - {error}");
+            throw new Exception(string.IsNullOrWhiteSpace(error) ? "Create order failed" : error);
         }
 
         public async Task<List<Order>?> GetUserOrdersAsync()

@@ -130,5 +130,27 @@ namespace DoAn_Frontend.Controllers
             if (!_apiService.IsAdmin()) return RedirectToAction("Index", "Home");
             return View(await _apiService.GetAdminOrdersAsync() ?? new List<Models.Order>());
         }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateOrderStatus([FromBody] UpdateOrderStatusRequest request)
+        {
+            if (!_apiService.IsAdmin())
+            {
+                _logger.LogWarning("UpdateOrderStatus unauthorized access attempt.");
+                return Json(new { success = false, message = "Unauthorized" });
+            }
+
+            _logger.LogInformation("UpdateOrderStatus called for OrderId={OrderId}, Status={Status}", request.OrderId, request.Status);
+            var success = await _apiService.UpdateOrderStatusAsync(request.OrderId, request.Status, request.CancelReason);
+            _logger.LogInformation("UpdateOrderStatus result for OrderId={OrderId}: {Success}", request.OrderId, success);
+            return Json(new { success, message = success ? "Order status updated successfully" : "Failed to update order status" });
+        }
+
+        public class UpdateOrderStatusRequest
+        {
+            public int OrderId { get; set; }
+            public string Status { get; set; } = string.Empty;
+            public string? CancelReason { get; set; }
+        }
     }
 }

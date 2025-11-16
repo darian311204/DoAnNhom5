@@ -31,15 +31,36 @@
                     <hr class="my-4">
                     
                     <h6 class="fw-bold mb-3">Khoảng giá</h6>
-                    <div class="input-group mb-2">
-                        <span class="input-group-text">Từ</span>
-                        <input type="number" class="form-control" placeholder="0" id="minPrice">
-                    </div>
-                    <div class="input-group mb-3">
-                        <span class="input-group-text">Đến</span>
-                        <input type="number" class="form-control" placeholder="1000000" id="maxPrice">
-                    </div>
-                    <button class="btn btn-primary w-100">Lọc</button>
+                    <form id="priceFilterForm" method="get" action="@Url.Action("Index")">
+                        @if (ViewBag.SelectedCategory != null)
+                        {
+                            <input type="hidden" name="categoryId" value="@ViewBag.SelectedCategory" />
+                        }
+                        @if (!string.IsNullOrEmpty(ViewBag.SearchTerm as string))
+                        {
+                            <input type="hidden" name="search" value="@ViewBag.SearchTerm" />
+                        }
+                        <div class="input-group mb-2">
+                            <span class="input-group-text">Từ</span>
+                            <input type="number" class="form-control" placeholder="0" name="minPrice" id="minPrice" value="@ViewBag.MinPrice" min="0">
+                        </div>
+                        <div class="input-group mb-3">
+                            <span class="input-group-text">Đến</span>
+                            <input type="number" class="form-control" placeholder="1000000" name="maxPrice" id="maxPrice" value="@ViewBag.MaxPrice" min="0">
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 mb-2">
+                            <i class="bi bi-funnel-fill"></i> Lọc
+                        </button>
+                        @if (ViewBag.MinPrice != null || ViewBag.MaxPrice != null)
+                        {
+                            <a href="@Url.Action("Index", new { 
+                                categoryId = ViewBag.SelectedCategory, 
+                                search = ViewBag.SearchTerm 
+                            })" class="btn btn-outline-secondary w-100">
+                                <i class="bi bi-x-circle"></i> Xóa bộ lọc
+                            </a>
+                        }
+                    </form>
                 </div>
             </div>
         </div>
@@ -50,6 +71,18 @@
             <div class="card mb-4">
                 <div class="card-body">
                     <form asp-action="Index" method="get" class="input-group">
+                        @if (ViewBag.SelectedCategory != null)
+                        {
+                            <input type="hidden" name="categoryId" value="@ViewBag.SelectedCategory" />
+                        }
+                        @if (ViewBag.MinPrice != null)
+                        {
+                            <input type="hidden" name="minPrice" value="@ViewBag.MinPrice" />
+                        }
+                        @if (ViewBag.MaxPrice != null)
+                        {
+                            <input type="hidden" name="maxPrice" value="@ViewBag.MaxPrice" />
+                        }
                         <input type="text" name="search" class="form-control" placeholder="Tìm kiếm sản phẩm..." value="@ViewBag.SearchTerm">
                         <button class="btn btn-primary" type="submit"><i class="bi bi-search"></i> Tìm kiếm</button>
                     </form>
@@ -57,9 +90,9 @@
             </div>
 
             <!-- Product Grid -->
-            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-                @if (Model != null && Model.Any())
-                {
+            @if (Model != null && Model.Any())
+            {
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-4">
                     @foreach (var product in Model)
                     {
                         <div class="col">
@@ -97,15 +130,78 @@
                             </div>
                         </div>
                     }
-                }
-                else
+                </div>
+
+                <!-- Pagination -->
+                @if (ViewBag.TotalPages > 1)
                 {
-                    <div class="col-12 text-center py-5">
-                        <i class="bi bi-box-seam fs-1 text-muted"></i>
-                        <p class="text-muted">Không tìm thấy sản phẩm nào</p>
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            @{
+                                int currentPage = ViewBag.CurrentPage ?? 1;
+                                int totalPages = ViewBag.TotalPages ?? 1;
+                                int? categoryId = ViewBag.SelectedCategory;
+                                string search = ViewBag.SearchTerm as string;
+                                decimal? minPrice = ViewBag.MinPrice;
+                                decimal? maxPrice = ViewBag.MaxPrice;
+                            }
+
+                            <!-- Previous Button -->
+                            <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                                <a class="page-link" href="@Url.Action("Index", new { 
+                                    page = currentPage - 1, 
+                                    categoryId = categoryId, 
+                                    search = search,
+                                    minPrice = minPrice,
+                                    maxPrice = maxPrice
+                                })">
+                                    <i class="bi bi-chevron-left"></i> Trước
+                                </a>
+                            </li>
+
+                            <!-- Page Numbers -->
+                            @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(totalPages, currentPage + 2); i++)
+                            {
+                                <li class="page-item @(i == currentPage ? "active" : "")">
+                                    <a class="page-link" href="@Url.Action("Index", new { 
+                                        page = i, 
+                                        categoryId = categoryId, 
+                                        search = search,
+                                        minPrice = minPrice,
+                                        maxPrice = maxPrice
+                                    })">@i</a>
+                                </li>
+                            }
+
+                            <!-- Next Button -->
+                            <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                                <a class="page-link" href="@Url.Action("Index", new { 
+                                    page = currentPage + 1, 
+                                    categoryId = categoryId, 
+                                    search = search,
+                                    minPrice = minPrice,
+                                    maxPrice = maxPrice
+                                })">
+                                    Sau <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+
+                    <!-- Page Info -->
+                    <div class="text-center text-muted mt-2">
+                        Hiển thị @((currentPage - 1) * 12 + 1) - @(Math.Min(currentPage * 12, ViewBag.TotalItems ?? 0)) 
+                        trong tổng số @(ViewBag.TotalItems ?? 0) sản phẩm
                     </div>
                 }
-            </div>
+            }
+            else
+            {
+                <div class="col-12 text-center py-5">
+                    <i class="bi bi-box-seam fs-1 text-muted"></i>
+                    <p class="text-muted">Không tìm thấy sản phẩm nào</p>
+                </div>
+            }
         </div>
     </div>
 </div>

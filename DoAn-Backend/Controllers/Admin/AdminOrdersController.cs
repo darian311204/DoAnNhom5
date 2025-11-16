@@ -59,7 +59,7 @@ namespace DoAn_Backend.Controllers.Admin
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
 
-                var result = await _adminService.UpdateOrderStatusAsync(id, dto.Status);
+                var result = await _adminService.UpdateOrderStatusAsync(id, dto.Status, dto.CancelReason);
                 if (!result)
                     return NotFound();
 

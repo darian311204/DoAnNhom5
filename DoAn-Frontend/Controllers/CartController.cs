@@ -80,8 +80,14 @@ namespace DoAn_Frontend.Controllers
         [HttpPost]
         public async Task<IActionResult> Remove(int cartId)
         {
-            if (!_apiService.IsAuthenticated()) return RedirectToAction("Login", "Auth");
-            await _apiService.RemoveFromCartAsync(cartId);
+            if (!_apiService.IsAuthenticated()) return Json(new { success = false, message = "Unauthorized" });
+            
+            var success = await _apiService.RemoveFromCartAsync(cartId);
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new { success, message = success ? "Removed" : "Failed" });
+            }
+            
             return RedirectToAction("Index");
         }
     }

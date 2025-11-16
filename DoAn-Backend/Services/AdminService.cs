@@ -152,15 +152,19 @@ namespace DoAn_Backend.Services
                 .ToListAsync();
         }
 
-        public async Task<bool> UpdateOrderStatusAsync(int orderId, string status)
+        public async Task<bool> UpdateOrderStatusAsync(int orderId, string status, string? cancelReason = null)
         {
             var order = await _context.Orders.FindAsync(orderId);
             if (order == null) return false;
 
             order.Status = status;
-            if (status == "Cancelled")
+            if (status == "Cancelled" && !string.IsNullOrWhiteSpace(cancelReason))
             {
-                // Keep cancel reason if set elsewhere; no-op here
+                order.CancelReason = cancelReason;
+            }
+            else if (status != "Cancelled")
+            {
+                order.CancelReason = null; // Clear cancel reason if status is not Cancelled
             }
             _context.Orders.Update(order);
             await _context.SaveChangesAsync();

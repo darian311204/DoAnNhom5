@@ -65,6 +65,8 @@ namespace DoAn_Frontend.Services
 
         // Admin delegation
         public async Task<List<Order>?> GetAdminOrdersAsync() => await _adminService.GetAdminOrdersAsync();
+        public async Task<bool> UpdateOrderStatusAsync(int orderId, string status, string? cancelReason = null) 
+            => await _adminService.UpdateOrderStatusAsync(orderId, status, cancelReason);
         public async Task<bool> CreateProductAsync(Product product) => await _adminService.CreateProductAsync(product);
         public async Task<Product?> GetProductByIdAsync(int id) => await _adminService.GetProductByIdAsync(id);
         public async Task<bool> UpdateProductAsync(Product product) => await _adminService.UpdateProductAsync(product);

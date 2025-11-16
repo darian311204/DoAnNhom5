@@ -41,7 +41,7 @@
                             </select>
                         </td>
                         <td>
-                            <span class="cancel-reason-text">@order.Status == "Cancelled" ? order.CancelReason : ""</span>
+                            <span class="cancel-reason-text">@(order.Status == "Cancelled" ? order.CancelReason : "")</span>
                         </td>
                         <td>
                             <button class="btn btn-sm btn-info" onclick="viewDetails(@order.OrderID)">
@@ -70,19 +70,24 @@ function updateStatus(orderId, status) {
         return;
     }
 
-    fetch('/api/admin/Orders/' + orderId + '/status', {
-        method: 'PUT',
+    fetch('@Url.Action("UpdateOrderStatus", "Admin")', {
+        method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
-            'Authorization': '' // auth handled by ApiService in backend calls
+            'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ status, cancelReason })
+        body: JSON.stringify({ orderId, status, cancelReason })
     })
     .then(r => {
         if (!r.ok) return r.json().then(err => Promise.reject(err));
         return r.json();
     })
-    .then(() => location.reload())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Không thể cập nhật trạng thái đơn hàng: ' + (data.message || ''));
+        }
+    })
     .catch(err => {
         console.error('Update status error:', err);
         alert('Không thể cập nhật trạng thái đơn hàng.');

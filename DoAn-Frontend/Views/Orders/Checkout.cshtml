@@ -95,8 +95,12 @@ function confirmOrder() {
             alert('Đặt hàng thành công!');
             window.location.href = '@Url.Action("History")';
         } else {
-            alert('Đặt hàng thất bại!');
+            alert('Đặt hàng thất bại: ' + (data.message || 'Vui lòng thử lại.'));
         }
+    })
+    .catch(error => {
+        console.error('Checkout error:', error);
+        alert('Có lỗi xảy ra khi đặt hàng!');
     });
 }
 </script>

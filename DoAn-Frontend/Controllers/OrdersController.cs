@@ -1,5 +1,6 @@
 using DoAn_Frontend.Services;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json.Serialization;
 
 namespace DoAn_Frontend.Controllers
 {
@@ -19,12 +20,39 @@ namespace DoAn_Frontend.Controllers
             return View();
         }
 
-        [HttpPost]
-        public async Task<IActionResult> CreateOrder(string shippingAddress, string phone, string recipientName)
+        public class CreateOrderRequest
         {
-            if (!_apiService.IsAuthenticated()) return Json(new { success = false });
-            var order = await _apiService.CreateOrderAsync(shippingAddress, phone, recipientName);
-            return Json(new { success = order != null });
+            [JsonPropertyName("shippingAddress")]
+            public string ShippingAddress { get; set; } = string.Empty;
+            
+            [JsonPropertyName("phone")]
+            public string Phone { get; set; } = string.Empty;
+            
+            [JsonPropertyName("recipientName")]
+            public string RecipientName { get; set; } = string.Empty;
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest request)
+        {
+            if (!_apiService.IsAuthenticated()) return Json(new { success = false, message = "Unauthorized" });
+            
+            if (request == null || string.IsNullOrWhiteSpace(request.ShippingAddress) || 
+                string.IsNullOrWhiteSpace(request.Phone) || string.IsNullOrWhiteSpace(request.RecipientName))
+            {
+                return Json(new { success = false, message = "All fields are required" });
+            }
+            
+            try
+            {
+                var order = await _apiService.CreateOrderAsync(request.ShippingAddress, request.Phone, request.RecipientName);
+                return Json(new { success = order != null });
+            }
+            catch (Exception ex)
+            {
+                // Surface backend error message to the frontend for debugging
+                return Json(new { success = false, message = ex.Message });
+            }
         }
 
         public async Task<IActionResult> History()
