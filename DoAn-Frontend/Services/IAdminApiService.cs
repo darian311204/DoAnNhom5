@@ -1,4 +1,5 @@
 using DoAn_Frontend.Models;
+using Microsoft.AspNetCore.Http;
 
 namespace DoAn_Frontend.Services
 {
@@ -13,6 +14,9 @@ namespace DoAn_Frontend.Services
         Task<Product?> GetProductByIdAsync(int id);
         Task<bool> UpdateProductAsync(Product product);
         Task<bool> DeleteProductAsync(int productId);
+
+        // Image upload
+        Task<string?> UploadImageAsync(IFormFile file);
     }
 }
 

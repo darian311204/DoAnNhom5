@@ -69,5 +69,6 @@ namespace DoAn_Frontend.Services
         public async Task<Product?> GetProductByIdAsync(int id) => await _adminService.GetProductByIdAsync(id);
         public async Task<bool> UpdateProductAsync(Product product) => await _adminService.UpdateProductAsync(product);
         public async Task<bool> DeleteProductAsync(int productId) => await _adminService.DeleteProductAsync(productId);
+        public async Task<string?> UploadImageAsync(IFormFile file) => await _adminService.UploadImageAsync(file);
     }
 }

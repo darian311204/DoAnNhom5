@@ -21,7 +21,7 @@
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label class="form-label">Giá <span class="text-danger">*</span></label>
-                    <input type="number" class="form-control" name="Price" value="@Model.Price" min="0" step="1000" required>
+                    <input type="number" class="form-control" name="Price" value="@Model.Price" min="0" step="1" required>
                 </div>
                 <div class="col-md-6 mb-3">
                     <label class="form-label">Số lượng tồn kho <span class="text-danger">*</span></label>
@@ -46,8 +46,13 @@
             </div>
             
             <div class="mb-3">
-                <label class="form-label">Đường dẫn ảnh</label>
-                <input type="url" class="form-control" name="ImageURL" value="@Model.ImageURL" placeholder="https://example.com/image.jpg">
+                <label class="form-label">Ảnh sản phẩm</label>
+                <input type="file" class="form-control" id="ImageFile" name="ImageFile" accept="image/*" onchange="onEditImageSelected(this)">
+                <input type="hidden" id="ImageURL" name="ImageURL" value="@Model.ImageURL" />
+                @if (!string.IsNullOrEmpty(Model.ImageURL))
+                {
+                    <small class="d-block text-muted mt-1">Ảnh hiện tại: <a href="@Model.ImageURL" target="_blank">Xem</a></small>
+                }
             </div>
             
             <div class="mb-3">
@@ -77,19 +82,10 @@ document.getElementById('productForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
     const formData = new FormData(this);
-    const product = {};
-    formData.forEach((value, key) => {
-        if (key === 'IsActive') {
-            product[key] = this.querySelector('[name="IsActive"]').checked;
-        } else {
-            product[key] = value;
-        }
-    });
-    
+
     fetch('/Admin/UpdateProduct', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(product)
+        body: formData
     })
     .then(response => response.json())
     .then(data => {
@@ -105,4 +101,32 @@ document.getElementById('productForm').addEventListener('submit', function(e) {
         alert('Có lỗi xảy ra!');
     });
 });
+
+function onEditImageSelected(input) {
+    const file = input.files && input.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    fetch('/Admin/UploadImage', {
+        method: 'POST',
+        body: formData
+    })
+        .then(r => {
+            if (!r.ok) return r.json().then(err => Promise.reject(err));
+            return r.json();
+        })
+        .then(data => {
+            if (data.success && data.imageUrl) {
+                document.getElementById('ImageURL').value = data.imageUrl;
+            } else {
+                alert('Không thể tải ảnh lên.');
+            }
+        })
+        .catch(err => {
+            console.error('Upload image error:', err);
+            alert('Có lỗi xảy ra khi tải ảnh lên.');
+        });
+}
 </script>

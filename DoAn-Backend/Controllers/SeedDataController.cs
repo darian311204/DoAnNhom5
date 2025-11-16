@@ -1,6 +1,7 @@
 using DoAn_Backend.Data;
 using DoAn_Backend.DTOs;
 using DoAn_Backend.Models;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Net.Http.Headers;
@@ -15,19 +16,26 @@ namespace DoAn_Backend.Controllers
         private readonly ApplicationDbContext _context;
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _configuration;
+        private readonly IWebHostEnvironment _env;
         private string? _adminToken;
 
         public SeedDataController(
             ApplicationDbContext context,
             HttpClient httpClient,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IWebHostEnvironment env)
         {
             _context = context;
             _httpClient = httpClient;
             _configuration = configuration;
+            _env = env;
 
             // Set base address for API calls
-            var baseUrl = _configuration["ApiBaseUrl"] ?? "http://localhost:5090/api";
+            var baseUrl = _configuration["ApiBaseUrl"] ?? "http://localhost:5090/api/";
+            if (!baseUrl.EndsWith("/"))
+            {
+                baseUrl += "/";
+            }
             _httpClient.BaseAddress = new Uri(baseUrl);
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
@@ -40,13 +48,16 @@ namespace DoAn_Backend.Controllers
                 // Ensure database is created
                 await _context.Database.EnsureCreatedAsync();
 
-                // Check if database needs seeding
-                var hasUsers = await _context.Users.AnyAsync();
-
-                if (hasUsers)
-                {
-                    return Ok(new { message = "Database already contains data, skipping seed", seeded = false });
-                }
+                // Always start from a clean state when seeding:
+                // remove dependent entities first to satisfy FK constraints
+                _context.OrderDetails.RemoveRange(_context.OrderDetails);
+                _context.Orders.RemoveRange(_context.Orders);
+                _context.Reviews.RemoveRange(_context.Reviews);
+                _context.Carts.RemoveRange(_context.Carts);
+                _context.Products.RemoveRange(_context.Products);
+                _context.Categories.RemoveRange(_context.Categories);
+                _context.Users.RemoveRange(_context.Users);
+                await _context.SaveChangesAsync();
 
                 // First, login as admin or register admin user
                 await AuthenticateAsAdmin();
@@ -72,13 +83,14 @@ namespace DoAn_Backend.Controllers
         {
             try
             {
-                // Try to login as admin
+                // Prepare login payload
                 var loginDto = new LoginDto
                 {
                     Email = "admin@example.com",
                     Password = "admin123"
                 };
 
+                // First, try to login assuming admin already exists and has Admin role
                 var response = await _httpClient.PostAsJsonAsync("Auth/login", loginDto);
 
                 if (response.IsSuccessStatusCode)
@@ -106,7 +118,15 @@ namespace DoAn_Backend.Controllers
                 response = await _httpClient.PostAsJsonAsync("Auth/register", registerDto);
                 if (response.IsSuccessStatusCode)
                 {
-                    // After registration, login
+                    // Update user role to Admin directly in DB (since register creates Customer)
+                    var adminUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == "admin@example.com");
+                    if (adminUser != null)
+                    {
+                        adminUser.Role = "Admin";
+                        await _context.SaveChangesAsync();
+                    }
+
+                    // Now login again to get a token that includes the Admin role
                     response = await _httpClient.PostAsJsonAsync("Auth/login", loginDto);
                     if (response.IsSuccessStatusCode)
                     {
@@ -118,14 +138,6 @@ namespace DoAn_Backend.Controllers
                             _httpClient.DefaultRequestHeaders.Authorization =
                                 new AuthenticationHeaderValue("Bearer", _adminToken);
                         }
-                    }
-
-                    // Update user role to Admin directly in DB (since register creates Customer)
-                    var adminUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == "admin@example.com");
-                    if (adminUser != null)
-                    {
-                        adminUser.Role = "Admin";
-                        await _context.SaveChangesAsync();
                     }
                 }
             }
@@ -235,6 +247,51 @@ namespace DoAn_Backend.Controllers
             }
         }
 
+        private string GetImageUrlFromResources(string fileName)
+        {
+            try
+            {
+                // Determine source (Resources) and destination (wwwroot/images/products) paths
+                var contentRoot = _env.ContentRootPath ?? Directory.GetCurrentDirectory();
+                var resourcesDir = Path.Combine(contentRoot, "Resources");
+                var webRoot = _env.WebRootPath ?? Path.Combine(contentRoot, "wwwroot");
+                var destDir = Path.Combine(webRoot, "images", "products");
+
+                Directory.CreateDirectory(destDir);
+
+                var sourcePath = Path.Combine(resourcesDir, fileName);
+                var destPath = Path.Combine(destDir, fileName);
+
+                if (System.IO.File.Exists(sourcePath))
+                {
+                    if (!System.IO.File.Exists(destPath))
+                    {
+                        System.IO.File.Copy(sourcePath, destPath, overwrite: false);
+                    }
+
+                    // Build absolute URL to backend so frontend can load images from API host
+                    var apiBase = _configuration["ApiBaseUrl"] ?? "http://localhost:5090/api/";
+                    // Strip trailing slash
+                    if (apiBase.EndsWith("/"))
+                        apiBase = apiBase.TrimEnd('/');
+                    // Strip "/api" suffix if present to get backend root
+                    if (apiBase.EndsWith("/api", StringComparison.OrdinalIgnoreCase))
+                        apiBase = apiBase[..^4];
+
+                    return $"{apiBase}/images/products/{fileName}";
+                }
+
+                Console.WriteLine($"SeedData warning: image file not found in Resources: {sourcePath}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"SeedData error copying image '{fileName}': {ex.Message}");
+            }
+
+            // Fallback (frontend will show placeholder on error)
+            return "https://via.placeholder.com/300x300";
+        }
+
         private async Task SeedProducts()
         {
             if (await _context.Products.AnyAsync())
@@ -255,7 +312,7 @@ namespace DoAn_Backend.Controllers
                     ProductName = "Áo Sơ Mi Nam Trắng",
                     Price = 350000,
                     Description = "Áo sơ mi nam trắng chất liệu cotton cao cấp, form slim fit",
-                    ImageURL = "/images/products/ao-so-mi-nam-trang.jpg",
+                    ImageURL = GetImageUrlFromResources("ao-somi-nam-1.jpg"),
                     CategoryID = aoNam?.CategoryID ?? 1,
                     Stock = 50,
                     IsActive = true
@@ -265,7 +322,7 @@ namespace DoAn_Backend.Controllers
                     ProductName = "Áo Thun Nam Basic",
                     Price = 150000,
                     Description = "Áo thun nam basic màu đen, chất liệu cotton 100%",
-                    ImageURL = "/images/products/ao-thun-nam-basic.jpg",
+                    ImageURL = GetImageUrlFromResources("aophong-den-nam.png"),
                     CategoryID = aoNam?.CategoryID ?? 1,
                     Stock = 100,
                     IsActive = true
@@ -275,7 +332,7 @@ namespace DoAn_Backend.Controllers
                     ProductName = "Áo Polo Nam",
                     Price = 250000,
                     Description = "Áo polo nam chất liệu cotton pique, thoáng mát",
-                    ImageURL = "/images/products/ao-polo-nam.jpg",
+                    ImageURL = GetImageUrlFromResources("ao-polo-nam.jpg"),
                     CategoryID = aoNam?.CategoryID ?? 1,
                     Stock = 75,
                     IsActive = true
@@ -287,7 +344,7 @@ namespace DoAn_Backend.Controllers
                     ProductName = "Áo Phông Nữ Dáng Rộng",
                     Price = 180000,
                     Description = "Áo phông nữ dáng rộng màu hồng pastel",
-                    ImageURL = "/images/products/ao-phong-nu.jpg",
+                    ImageURL = GetImageUrlFromResources("ao-thun-nu-1.jpg"),
                     CategoryID = aoNu?.CategoryID ?? 2,
                     Stock = 60,
                     IsActive = true
@@ -297,7 +354,7 @@ namespace DoAn_Backend.Controllers
                     ProductName = "Áo Sơ Mi Nữ Trắng",
                     Price = 320000,
                     Description = "Áo sơ mi nữ trắng cổ điển, chất liệu chiffon",
-                    ImageURL = "/images/products/ao-so-mi-nu.jpg",
+                    ImageURL = GetImageUrlFromResources("ao-thun-nu-2.jpg"),
                     CategoryID = aoNu?.CategoryID ?? 2,
                     Stock = 45,
                     IsActive = true
@@ -309,7 +366,7 @@ namespace DoAn_Backend.Controllers
                     ProductName = "Quần Jean Nam Slim",
                     Price = 450000,
                     Description = "Quần jean nam slim fit, màu xanh đậm",
-                    ImageURL = "/images/products/quan-jean-nam.jpg",
+                    ImageURL = GetImageUrlFromResources("quan-jean-1.jpg"),
                     CategoryID = quanNam?.CategoryID ?? 3,
                     Stock = 80,
                     IsActive = true
@@ -319,7 +376,7 @@ namespace DoAn_Backend.Controllers
                     ProductName = "Quần Kaki Nam",
                     Price = 380000,
                     Description = "Quần kaki nam màu be, form regular",
-                    ImageURL = "/images/products/quan-kaki-nam.jpg",
+                    ImageURL = GetImageUrlFromResources("quan-somi-1.jpg"),
                     CategoryID = quanNam?.CategoryID ?? 3,
                     Stock = 65,
                     IsActive = true
@@ -331,7 +388,7 @@ namespace DoAn_Backend.Controllers
                     ProductName = "Quần Jean Nữ Ống Rộng",
                     Price = 420000,
                     Description = "Quần jean nữ ống rộng màu xanh nhạt",
-                    ImageURL = "/images/products/quan-jean-nu.jpg",
+                    ImageURL = GetImageUrlFromResources("quan-somi-2.jpg"),
                     CategoryID = quanNu?.CategoryID ?? 4,
                     Stock = 70,
                     IsActive = true
@@ -341,7 +398,7 @@ namespace DoAn_Backend.Controllers
                     ProductName = "Quần Short Nữ",
                     Price = 220000,
                     Description = "Quần short nữ màu đen, chất liệu cotton",
-                    ImageURL = "/images/products/quan-short-nu.jpg",
+                    ImageURL = GetImageUrlFromResources("quan-short-nam-1.jpg"),
                     CategoryID = quanNu?.CategoryID ?? 4,
                     Stock = 55,
                     IsActive = true
@@ -353,7 +410,7 @@ namespace DoAn_Backend.Controllers
                     ProductName = "Túi Xách Da",
                     Price = 550000,
                     Description = "Túi xách da thật màu nâu",
-                    ImageURL = "/images/products/tui-xach-da.jpg",
+                    ImageURL = GetImageUrlFromResources("ao-khoac-nu.jpg"),
                     CategoryID = phuKien?.CategoryID ?? 5,
                     Stock = 30,
                     IsActive = true
@@ -363,7 +420,7 @@ namespace DoAn_Backend.Controllers
                     ProductName = "Thắt Lưng Da",
                     Price = 280000,
                     Description = "Thắt lưng da nam màu đen",
-                    ImageURL = "/images/products/that-lung-da.jpg",
+                    ImageURL = GetImageUrlFromResources("ao-khoac-kaki-nam.jpg"),
                     CategoryID = phuKien?.CategoryID ?? 5,
                     Stock = 40,
                     IsActive = true
@@ -373,7 +430,7 @@ namespace DoAn_Backend.Controllers
                     ProductName = "Mũ Lưỡi Trai",
                     Price = 180000,
                     Description = "Mũ lưỡi trai màu đen",
-                    ImageURL = "/images/products/mu-luoi-trai.jpg",
+                    ImageURL = GetImageUrlFromResources("ao-phao-nam.jpg"),
                     CategoryID = phuKien?.CategoryID ?? 5,
                     Stock = 50,
                     IsActive = true
