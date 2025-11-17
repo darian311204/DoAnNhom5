@@ -170,6 +170,76 @@ namespace DoAn_Backend.Controllers
                     Password = "customer123",
                     Phone = "0912345678"
                 }
+                new RegisterDto
+                {
+                    FullName = "Nguyễn Văn A",
+                    Email = "nguyenvana@example.com",
+                    Password = "customer123",
+                    Phone = "0901234567"
+                },
+                new RegisterDto
+                {
+                    FullName = "Trần Thị B",
+                    Email = "tranthib@example.com",
+                    Password = "customer123",
+                    Phone = "0902345678"
+                },
+                new RegisterDto
+                {
+                    FullName = "Lê Văn C",
+                    Email = "levanc@example.com",
+                    Password = "customer123",
+                    Phone = "0903456789"
+                },
+                new RegisterDto
+                {
+                    FullName = "Phạm Thị D",
+                    Email = "phamthid@example.com",
+                    Password = "customer123",
+                    Phone = "0904567890"
+                },
+                new RegisterDto
+                {
+                    FullName = "Hoàng Văn E",
+                    Email = "hoangvane@example.com",
+                    Password = "customer123",
+                    Phone = "0905678901"
+                },
+                new RegisterDto
+                {
+                    FullName = "Vũ Thị F",
+                    Email = "vuthif@example.com",
+                    Password = "customer123",
+                    Phone = "0906789012"
+                },
+                new RegisterDto
+                {
+                    FullName = "Đỗ Văn G",
+                    Email = "dovang@example.com",
+                    Password = "customer123",
+                    Phone = "0907890123"
+                },
+                new RegisterDto
+                {
+                    FullName = "Bùi Thị H",
+                    Email = "buithih@example.com",
+                    Password = "customer123",
+                    Phone = "0908901234"
+                },
+                new RegisterDto
+                {
+                    FullName = "Đinh Văn I",
+                    Email = "dinhvani@example.com",
+                    Password = "customer123",
+                    Phone = "0909012345"
+                },
+                new RegisterDto
+                {
+                    FullName = "Mai Thị K",
+                    Email = "maithik@example.com",
+                    Password = "customer123",
+                    Phone = "0910123456"
+                }
             };
 
             foreach (var customer in customers)
@@ -225,6 +295,66 @@ namespace DoAn_Backend.Controllers
                 {
                     CategoryName = "Phụ Kiện",
                     Description = "Phụ kiện thời trang",
+                    IsActive = true
+                }
+                new CreateCategoryDto
+                {
+                    CategoryName = "Áo Khoác",
+                    Description = "Áo khoác nam nữ đa dạng kiểu dáng",
+                    IsActive = true
+                },
+                new CreateCategoryDto
+                {
+                    CategoryName = "Giày Dép",
+                    Description = "Giày dép thời trang cao cấp",
+                    IsActive = true
+                },
+                new CreateCategoryDto
+                {
+                    CategoryName = "Váy Đầm",
+                    Description = "Váy đầm nữ sang trọng",
+                    IsActive = true
+                },
+                new CreateCategoryDto
+                {
+                    CategoryName = "Đồ Thể Thao",
+                    Description = "Trang phục thể thao năng động",
+                    IsActive = true
+                },
+                new CreateCategoryDto
+                {
+                    CategoryName = "Đồ Ngủ",
+                    Description = "Đồ ngủ thoải mái cho nam nữ",
+                    IsActive = true
+                },
+                new CreateCategoryDto
+                {
+                    CategoryName = "Đồ Lót",
+                    Description = "Đồ lót cao cấp",
+                    IsActive = true
+                },
+                new CreateCategoryDto
+                {
+                    CategoryName = "Túi Xách",
+                    Description = "Túi xách thời trang đa dạng mẫu mã",
+                    IsActive = true
+                },
+                new CreateCategoryDto
+                {
+                    CategoryName = "Đồng Hồ",
+                    Description = "Đồng hồ nam nữ chính hãng",
+                    IsActive = true
+                },
+                new CreateCategoryDto
+                {
+                    CategoryName = "Trang Sức",
+                    Description = "Trang sức thời trang cao cấp",
+                    IsActive = true
+                },
+                new CreateCategoryDto
+                {
+                    CategoryName = "Nước Hoa",
+                    Description = "Nước hoa chính hãng nhiều mùi hương",
                     IsActive = true
                 }
             };
@@ -433,6 +563,107 @@ namespace DoAn_Backend.Controllers
                     ImageURL = GetImageUrlFromResources("ao-phao-nam.jpg"),
                     CategoryID = phuKien?.CategoryID ?? 5,
                     Stock = 50,
+                    IsActive = true
+                }
+                // Thêm sản phẩm mới
+                new CreateProductDto
+                {
+                    ProductName = "Áo Khoác Jean Nam",
+                    Price = 580000,
+                    Description = "Áo khoác jean nam màu xanh đậm, phong cách năng động",
+                    ImageURL = GetImageUrlFromResources("ao-khoac-jean-nam.jpg"),
+                    CategoryID = aoNam?.CategoryID ?? 1,
+                    Stock = 35,
+                    IsActive = true
+                },
+                new CreateProductDto
+                {
+                    ProductName = "Áo Len Nam",
+                    Price = 420000,
+                    Description = "Áo len nam cổ tròn, chất liệu len cao cấp",
+                    ImageURL = GetImageUrlFromResources("ao-len-nam.jpg"),
+                    CategoryID = aoNam?.CategoryID ?? 1,
+                    Stock = 40,
+                    IsActive = true
+                },
+                new CreateProductDto
+                {
+                    ProductName = "Áo Blazer Nữ",
+                    Price = 680000,
+                    Description = "Áo blazer nữ công sở màu xám",
+                    ImageURL = GetImageUrlFromResources("ao-blazer-nu.jpg"),
+                    CategoryID = aoNu?.CategoryID ?? 2,
+                    Stock = 25,
+                    IsActive = true
+                },
+                new CreateProductDto
+                {
+                    ProductName = "Áo Cardigan Nữ",
+                    Price = 380000,
+                    Description = "Áo cardigan nữ màu kem, dáng dài",
+                    ImageURL = GetImageUrlFromResources("ao-cardigan-nu.jpg"),
+                    CategoryID = aoNu?.CategoryID ?? 2,
+                    Stock = 50,
+                    IsActive = true
+                },
+                new CreateProductDto
+                {
+                    ProductName = "Quần Jogger Nam",
+                    Price = 320000,
+                    Description = "Quần jogger nam thể thao, chất liệu thun co giãn",
+                    ImageURL = GetImageUrlFromResources("quan-jogger-nam.jpg"),
+                    CategoryID = quanNam?.CategoryID ?? 3,
+                    Stock = 60,
+                    IsActive = true
+                },
+                new CreateProductDto
+                {
+                    ProductName = "Quần Âu Nam",
+                    Price = 480000,
+                    Description = "Quần âu nam công sở màu đen",
+                    ImageURL = GetImageUrlFromResources("quan-au-nam.jpg"),
+                    CategoryID = quanNam?.CategoryID ?? 3,
+                    Stock = 45,
+                    IsActive = true
+                },
+                new CreateProductDto
+                {
+                    ProductName = "Váy Nữ Dáng Xòe",
+                    Price = 390000,
+                    Description = "Váy nữ dáng xòe màu hồng nhạt",
+                    ImageURL = GetImageUrlFromResources("vay-nu-xoe.jpg"),
+                    CategoryID = quanNu?.CategoryID ?? 4,
+                    Stock = 35,
+                    IsActive = true
+                },
+                new CreateProductDto
+                {
+                    ProductName = "Quần Culottes Nữ",
+                    Price = 350000,
+                    Description = "Quần culottes nữ màu trắng, chất vải lụa",
+                    ImageURL = GetImageUrlFromResources("quan-culottes-nu.jpg"),
+                    CategoryID = quanNu?.CategoryID ?? 4,
+                    Stock = 42,
+                    IsActive = true
+                },
+                new CreateProductDto
+                {
+                    ProductName = "Kính Mát Nam Nữ",
+                    Price = 320000,
+                    Description = "Kính mát thời trang chống UV",
+                    ImageURL = GetImageUrlFromResources("kinh-mat.jpg"),
+                    CategoryID = phuKien?.CategoryID ?? 5,
+                    Stock = 55,
+                    IsActive = true
+                },
+                new CreateProductDto
+                {
+                    ProductName = "Ví Da Nam",
+                    Price = 380000,
+                    Description = "Ví da nam cao cấp màu nâu đen",
+                    ImageURL = GetImageUrlFromResources("vi-da-nam.jpg"),
+                    CategoryID = phuKien?.CategoryID ?? 5,
+                    Stock = 48,
                     IsActive = true
                 }
             };

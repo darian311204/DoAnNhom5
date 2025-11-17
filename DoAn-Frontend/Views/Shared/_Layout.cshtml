@@ -115,21 +115,23 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script>
-    // Update cart badge count
-    $(document).ready(function() {
-        updateCartBadge();
-    });
-    
-    function updateCartBadge() {
-        fetch('/Cart/GetCount')
-            .then(response => response.text())
-            .then(count => {
-                $('#cart-badge').text(count || '0');
-            })
-            .catch(e => {
-                $('#cart-badge').text('0');
-            });
-    }
+        // Khi trang web load xong
+        $(document).ready(function () {
+            updateCartBadge();   // <── CHÍNH LÀ CHỖ GỌI HÀM
+        });
+
+        // Hàm này chỉ chạy khi phía trên gọi nó
+        function updateCartBadge() {
+            fetch('/Cart/GetCount')         // Gửi request
+                .then(response => response.text())   // Nhận dữ liệu
+                .then(count => {
+                    $('#cart-badge').text(count || '0');  // Gán vào giao diện
+                })
+                .catch(e => {
+                    $('#cart-badge').text('0');
+                });
+        }
+
     </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
