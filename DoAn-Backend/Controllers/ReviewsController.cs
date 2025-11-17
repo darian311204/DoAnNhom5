@@ -1,9 +1,7 @@
-using DoAn_Backend.DTOs;
 using DoAn_Backend.Models;
 using DoAn_Backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace DoAn_Backend.Controllers
 {
@@ -12,14 +10,17 @@ namespace DoAn_Backend.Controllers
     public class ReviewsController : ControllerBase
     {
         private readonly IReviewService _reviewService;
+        private readonly ILogger<ReviewsController> _logger;
 
-        public ReviewsController(IReviewService reviewService)
+        public ReviewsController(IReviewService reviewService, ILogger<ReviewsController> logger)
         {
             _reviewService = reviewService;
+            _logger = logger;
         }
 
+        // Public endpoint - không c?n authentication
         [HttpGet("product/{productId}")]
-        public async Task<IActionResult> GetProductReviews(int productId)
+        public async Task<ActionResult<IEnumerable<Review>>> GetProductReviews(int productId)
         {
             try
             {
@@ -28,56 +29,71 @@ namespace DoAn_Backend.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = ex.Message });
+                _logger.LogError(ex, "Error getting reviews for product {ProductId}", productId);
+                return StatusCode(500, new { message = "Internal server error" });
             }
         }
 
-        [HttpPost]
+        // Public endpoint - không c?n authentication
+        [HttpGet("statistics/{productId}")]
+        public async Task<ActionResult<ReviewStatistics>> GetReviewStatistics(int productId)
+        {
+            try
+            {
+                var stats = await _reviewService.GetReviewStatisticsAsync(productId);
+                return Ok(stats);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting review statistics for product {ProductId}", productId);
+                return StatusCode(500, new { message = "Internal server error" });
+            }
+        }
+
+        // C?n authentication ð? thêm review
         [Authorize]
-        public async Task<IActionResult> AddReview([FromBody] CreateReviewDto reviewDto)
+        [HttpPost]
+        public async Task<ActionResult<Review>> AddReview([FromBody] AddReviewRequest request)
         {
             try
             {
-                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (userIdClaim == null)
-                    return Unauthorized();
+                var userIdClaim = User.FindFirst("UserId")?.Value;
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+                {
+                    _logger.LogWarning("AddReview called without valid user ID");
+                    return Unauthorized(new { message = "User not authenticated" });
+                }
 
-                var userId = int.Parse(userIdClaim);
+                // Ki?m tra user ð? review s?n ph?m này chýa
+                var hasReviewed = await _reviewService.UserHasReviewedProductAsync(request.ProductId, userId);
+                if (hasReviewed)
+                {
+                    _logger.LogWarning("User {UserId} already reviewed product {ProductId}", userId, request.ProductId);
+                    return BadRequest(new { message = "You have already reviewed this product" });
+                }
+
                 var review = await _reviewService.AddReviewAsync(
-                    reviewDto.ProductId, 
-                    userId, 
-                    reviewDto.Rating, 
-                    reviewDto.Comment);
+                    request.ProductId,
+                    userId,
+                    request.Rating,
+                    request.Comment ?? string.Empty
+                );
+
+                _logger.LogInformation("User {UserId} added review for product {ProductId}", userId, request.ProductId);
                 return Ok(review);
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message });
+                _logger.LogError(ex, "Error adding review");
+                return StatusCode(500, new { message = "Internal server error" });
             }
         }
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetReviewById(int id)
+        public class AddReviewRequest
         {
-            try
-            {
-                var review = await _reviewService.GetReviewByIdAsync(id);
-                if (review == null)
-                    return NotFound();
-
-                return Ok(review);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = ex.Message });
-            }
+            public int ProductId { get; set; }
+            public int Rating { get; set; }
+            public string? Comment { get; set; }
         }
-    }
-
-    public class CreateReviewDto
-    {
-        public int ProductId { get; set; }
-        public int Rating { get; set; }
-        public string Comment { get; set; } = string.Empty;
     }
 }

@@ -1,4 +1,4 @@
-using DoAn_Frontend.Services;
+﻿using DoAn_Frontend.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,7 +18,7 @@ builder.Services.AddScoped<ICartApiService, CartApiService>();
 builder.Services.AddScoped<IOrderApiService, OrderApiService>();
 builder.Services.AddScoped<IReviewApiService, ReviewApiService>();
 builder.Services.AddScoped<IAdminApiService, AdminApiService>();
-
+builder.Services.AddScoped<ICategoryApiService, CategoryApiService>();
 // Keep ApiService for backward compatibility (will delegate to new services)
 builder.Services.AddScoped<ApiService>();
 

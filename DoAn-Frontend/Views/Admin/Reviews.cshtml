@@ -1,0 +1,237 @@
+@model List<DoAn_Frontend.Models.Review>
+    @{
+    ViewData["Title"] = "Manage Reviews";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    }
+
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="mb-0">Review Management</h2>
+            <div class="d-flex gap-2">
+                <input type="text" id="searchInput" class="form-control" placeholder="Search reviews..." style="width: 300px;">
+                <select id="statusFilter" class="form-select" style="width: 200px;">
+                    <option value="">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                </select>
+                <select id="ratingFilter" class="form-select" style="width: 150px;">
+                    <option value="">All Ratings</option>
+                    <option value="5">5 Stars</option>
+                    <option value="4">4 Stars</option>
+                    <option value="3">3 Stars</option>
+                    <option value="2">2 Stars</option>
+                    <option value="1">1 Star</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="reviewsTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Product</th>
+                                <th>User</th>
+                                <th>Rating</th>
+                                <th>Comment</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var review in Model)
+                        {
+                            <tr data-review-id="@review.ReviewID" data-status="@(review.IsActive ? "active" : "inactive")" data-rating="@review.Rating">
+                                <td>@review.ReviewID</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        @if (!string.IsNullOrEmpty(review.Product?.ImageURL))
+                                        {
+                                        <img src="@review.Product.ImageURL" alt="@review.Product.ProductName" style="width: 40px; height: 40px; object-fit: cover; margin-right: 10px; border-radius: 4px;">
+                                        }
+                                        <span>@review.Product?.ProductName</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong>@review.User?.FullName</strong>
+                                        <br>
+                                        <small class="text-muted">@review.User?.Email</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="stars-display">
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                            if (i <= review.Rating)
+                                            {
+                                        <i class="fas fa-star text-warning"></i>
+                                            }
+                                            else
+                                            {
+                                        <i class="far fa-star text-warning"></i>
+                                            }
+                                        }
+                                        <span class="ms-1">(@review.Rating)</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div style="max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="@review.Comment">
+                                        @review.Comment
+                                    </div>
+                                </td>
+                                <td>@review.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>
+                                    @if (review.IsActive)
+                                    {
+                                    <span class="badge bg-success status-badge">Active</span>
+                                    }
+                                    else
+                                    {
+                                    <span class="badge bg-secondary status-badge">Inactive</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button class="btn btn-outline-primary toggle-status-btn" data-review-id="@review.ReviewID" title="Toggle Status">
+                                            <i class="fas fa-toggle-on"></i>
+                                        </button>
+                                        <button class="btn btn-outline-danger delete-review-btn" data-review-id="@review.ReviewID" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .stars-display {
+            font-size: 14px;
+        }
+
+        .table td {
+            vertical-align: middle;
+        }
+
+        .btn-group-sm .btn {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
+    </style>
+
+    @section Scripts {
+        <script>
+        $(document).ready(function() {
+            // Search functionality
+            $('#searchInput').on('keyup', function() {
+                filterReviews();
+            });
+
+            // Status filter
+            $('#statusFilter').on('change', function() {
+                filterReviews();
+            });
+
+            // Rating filter
+            $('#ratingFilter').on('change', function() {
+                filterReviews();
+            });
+
+            function filterReviews() {
+                var searchText = $('#searchInput').val().toLowerCase();
+                var statusFilter = $('#statusFilter').val();
+                var ratingFilter = $('#ratingFilter').val();
+
+                $('#reviewsTable tbody tr').each(function() {
+                    var row = $(this);
+                    var text = row.text().toLowerCase();
+                    var status = row.data('status');
+                    var rating = row.data('rating').toString();
+
+                    var matchSearch = searchText === '' || text.includes(searchText);
+                    var matchStatus = statusFilter === '' || status === statusFilter;
+                    var matchRating = ratingFilter === '' || rating === ratingFilter;
+
+                    if (matchSearch && matchStatus && matchRating) {
+                        row.show();
+                    } else {
+                        row.hide();
+                    }
+                });
+            }
+
+            // Toggle review status
+            $('.toggle-status-btn').click(function() {
+                var reviewId = $(this).data('review-id');
+                var row = $(this).closest('tr');
+
+                if (confirm('Are you sure you want to toggle this review status?')) {
+                    $.ajax({
+                        url: '@Url.Action("ToggleReviewActive", "Admin")',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ reviewId: reviewId }),
+                        success: function(response) {
+                            if (response.success) {
+                                var statusBadge = row.find('.status-badge');
+                                var currentStatus = row.data('status');
+
+                                if (currentStatus === 'active') {
+                                    statusBadge.removeClass('bg-success').addClass('bg-secondary').text('Inactive');
+                                    row.data('status', 'inactive');
+                                } else {
+                                    statusBadge.removeClass('bg-secondary').addClass('bg-success').text('Active');
+                                    row.data('status', 'active');
+                                }
+
+                                alert(response.message);
+                            } else {
+                                alert('Error: ' + response.message);
+                            }
+                        },
+                        error: function() {
+                            alert('An error occurred while updating review status');
+                        }
+                    });
+                }
+            });
+
+            // Delete review
+            $('.delete-review-btn').click(function() {
+                var reviewId = $(this).data('review-id');
+                var row = $(this).closest('tr');
+
+                if (confirm('Are you sure you want to delete this review? This action cannot be undone.')) {
+                    $.ajax({
+                        url: '@Url.Action("DeleteReview", "Admin")',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ reviewId: reviewId }),
+                        success: function(response) {
+                            if (response.success) {
+                                row.fadeOut(300, function() {
+                                    $(this).remove();
+                                });
+                                alert(response.message);
+                            } else {
+                                alert('Error: ' + response.message);
+                            }
+                        },
+                        error: function() {
+                            alert('An error occurred while deleting review');
+                        }
+                    });
+                }
+            });
+        });
+        </script>
+    }
