@@ -394,18 +394,29 @@ namespace DoAn_Frontend.Controllers
 
                 _logger.LogInformation("DeleteCategory result for Id={Id}: {Success}", request.Id, success);
 
+                if (!success)
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        message = "Category not found or could not be deleted"
+                    });
+                }
+
                 return Json(new
                 {
-                    success,
-                    message = success
-                        ? "Category deleted successfully"
-                        : "Failed to delete category. It may have associated products or doesn't exist."
+                    success = true,
+                    message = "Category deleted successfully"
                 });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error deleting category {Id}", request.Id);
-                return Json(new { success = false, message = "An error occurred while deleting the category" });
+                return Json(new
+                {
+                    success = false,
+                    message = ex.Message ?? "An error occurred while deleting the category"
+                });
             }
         }
 

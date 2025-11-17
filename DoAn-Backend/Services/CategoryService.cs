@@ -210,15 +210,15 @@ namespace DoAn_Backend.Services
                     return false;
                 }
 
-                // THAY ĐỔI: Từ chối xóa nếu có sản phẩm
-                if (category.Products.Any())
+                // Kiểm tra xem có sản phẩm không
+                if (category.Products != null && category.Products.Any())
                 {
                     throw new InvalidOperationException(
                         $"Cannot delete category '{category.CategoryName}' because it has {category.Products.Count} product(s). " +
                         "Please remove all products first or deactivate the category instead.");
                 }
 
-                // Chỉ xóa khi không có sản phẩm
+                // Xóa category
                 _context.Categories.Remove(category);
                 await _context.SaveChangesAsync();
 
@@ -226,6 +226,11 @@ namespace DoAn_Backend.Services
                     categoryId, category.CategoryName);
 
                 return true;
+            }
+            catch (InvalidOperationException)
+            {
+                // Re-throw để controller có thể handle
+                throw;
             }
             catch (Exception ex)
             {

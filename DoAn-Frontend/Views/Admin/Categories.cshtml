@@ -6,18 +6,7 @@
 
     <div class="container-fluid">
         <!-- DEBUG INFO -->
-        <div class="alert alert-info mb-3">
-            <strong>Debug Info:</strong>
-            <ul class="mb-0">
-                <li>Model is null: @(Model == null)</li>
-                <li>Model count: @(Model?.Count ?? 0)</li>
-                <li>Model type: @(Model?.GetType().Name ?? "null")</li>
-                @if (Model != null && Model.Any())
-            {
-                <li>First item: ID=@Model[0].CategoryID, Name=@Model[0].CategoryName</li>
-            }
-            </ul>
-        </div>
+        
 
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2>Category Management</h2>

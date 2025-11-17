@@ -143,6 +143,7 @@ namespace DoAn_Backend.Controllers.Admin
             try
             {
                 _logger.LogInformation("DeleteCategory called for id: {Id}", id);
+
                 var result = await _categoryService.DeleteCategoryAsync(id);
 
                 if (!result)
@@ -156,6 +157,7 @@ namespace DoAn_Backend.Controllers.Admin
             }
             catch (InvalidOperationException ex)
             {
+                // Exception từ việc category có products
                 _logger.LogWarning(ex, "Cannot delete category: {Id}", id);
                 return BadRequest(new { message = ex.Message });
             }
@@ -189,27 +191,6 @@ namespace DoAn_Backend.Controllers.Admin
                 return StatusCode(500, new { message = "An error occurred while updating category status" });
             }
         }
-        [HttpGet("test")]
-        [AllowAnonymous] // Tạm thời bỏ authentication để test
-        public async Task<IActionResult> TestGetCategories()
-        {
-            try
-            {
-                _logger.LogInformation("TestGetCategories called");
-                var categories = await _categoryService.GetAllCategoriesAsync();
-                _logger.LogInformation("Categories count: {Count}", categories?.Count() ?? 0);
-                return Ok(new
-                {
-                    success = true,
-                    count = categories?.Count() ?? 0,
-                    data = categories
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error in TestGetCategories");
-                return StatusCode(500, new { success = false, message = ex.Message });
-            }
-        }
+       
     }
 }

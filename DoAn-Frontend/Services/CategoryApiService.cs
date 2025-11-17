@@ -201,7 +201,6 @@ namespace DoAn_Frontend.Services
                 return false;
             }
         }
-
         public async Task<bool> DeleteCategoryAsync(int id)
         {
             try
@@ -209,20 +208,25 @@ namespace DoAn_Frontend.Services
                 var request = CreateRequest(HttpMethod.Delete, $"admin/categories/{id}");
                 var response = await _httpClient.SendAsync(request);
 
+                var responseContent = await response.Content.ReadAsStringAsync();
+                _logger.LogInformation("Delete response for category {Id}: Status={Status}, Content={Content}",
+                    id, response.StatusCode, responseContent);
+
                 if (response.IsSuccessStatusCode)
                 {
                     _logger.LogInformation("Successfully deleted category {CategoryId}", id);
                     return true;
                 }
 
-                var errorContent = await response.Content.ReadAsStringAsync();
-                _logger.LogWarning("Failed to delete category. Status: {StatusCode}, Error: {Error}",
-                    response.StatusCode, errorContent);
+                // Log chi tiết lỗi
+                _logger.LogWarning("Failed to delete category {Id}. Status: {StatusCode}, Error: {Error}",
+                    id, response.StatusCode, responseContent);
+
                 return false;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting category {CategoryId}", id);
+                _logger.LogError(ex, "Exception while deleting category {CategoryId}", id);
                 return false;
             }
         }
